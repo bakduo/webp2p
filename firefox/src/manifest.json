@@ -1,0 +1,55 @@
+{
+  "manifest_version": 2,
+  "name": "MDP2P",
+  "version": "5.1",
+  "author": "ragonzalez",
+  "description": "Allows the user to use webrtc",
+  "icons": {
+    "48": "icons/quicknote-48.png",
+    "32": "icons/quicknote-32.png"
+  },
+  "permissions": [
+    "storage",
+    "<all_urls>",
+    "webRequest",
+    "webRequestBlocking",
+    "menus",
+    "activeTab",
+    "notifications",
+    "tabs",
+    "find",
+    "clipboardWrite",
+    "contextMenus",
+    "sessions",
+    "geolocation"
+  ],
+  "background": {
+    "scripts": ["p2pws.js"]
+  },
+  "browser_action": {
+    "default_icon": {
+     "32": "icons/quicknote-32.png"
+    },
+    "default_title": "Peer",
+    "default_popup": "popup/paneles.html",
+    "browser_style": true
+  },
+  "options_ui": {
+      "page": "options/main.html",
+      "browser_style": true
+  },
+  "content_security_policy": "script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://*.jquery.com https://cdn.jsdelivr.net https://*.bootstrapcdn.com; object-src 'self'",
+  "web_accessible_resources": [
+      "lib/bootstrap.min.css",
+      "lib/jquery-3.4.1.slim.min.js",
+      "lib/popper.min.js",
+      "lib/bootstrap.min.js",
+      "paneladmin/index.html"
+  ],
+  "applications": {
+    "gecko": {
+      "id": "mdp2p@oncosmos.com"
+    }
+  },
+  "default_locale": "en"
+}

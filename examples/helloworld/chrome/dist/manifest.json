@@ -1,0 +1,41 @@
+{
+  "manifest_version": 2,
+  "name": "helloworld",
+  "version": "0.0.1",
+  "author": "ragonzalez",
+  "description": "helloworld p2p",
+  "icons": {
+    "32": "icons/hello-world-32.png",
+    "48": "icons/hello-world-48.png"
+  },
+  "permissions": [
+    "management",
+    "<all_urls>",
+    "webRequest",
+    "webRequestBlocking",
+    "activeTab",
+    "notifications",
+    "tabs",
+    "clipboardWrite",
+    "contextMenus",
+    "sessions"
+  ],
+  "browser_action": {
+    "default_icon": {
+     "32": "icons/hello-world-32.png",
+     "48": "icons/hello-world-48.png"
+    },
+    "default_title": "helloworld P2P",
+    "default_popup": "template/code.html",
+    "chrome_style": true
+  },
+  "background": {
+    "scripts": ["browser-polyfill.js","conector.js","helloworld.js"]
+  },
+  "web_accessible_resources": [
+    "lib/bootstrap.min.css",
+    "lib/jquery-3.4.1.slim.min.js",
+    "lib/popper.min.js",
+    "lib/bootstrap.min.js"
+  ]
+}

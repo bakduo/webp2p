@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+    <meta charset="utf-8"/>
+  </head>
+
+  <body>
+    <form>
+      
+       
+       <input type="text" id="signal_server"  name="server_signal" value="ws://server.dot"/><br>
+
+       <label>Mode:</label>
+       
+       <br>
+       <input type="checkbox" id="check_server"  name="server_type" value="server" checked>Server<br>
+       <input type="checkbox" id="check_client" name="client_type" value="client" checked>Client<br>
+       <input type="checkbox" id="check_manager" name="manager_type" value="manager">Manager<br>
+       <input type="checkbox" id="check_alone" name="alone_type" value="alone">Alone<br>
+
+      <input type="button" id="save_options" value="Save">
+      
+      <input type="button" id="restore_options" value="Restore">
+      
+      
+    </form>
+
+    <script src="options.js"></script>
+  </body>
+</html>
