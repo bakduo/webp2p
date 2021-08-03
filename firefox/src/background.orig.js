@@ -14,7 +14,7 @@ var listaPeers = [];
 var serviceForPeer = new Map();
 const constraints = {audio: true, video: true};
 //puerto comando
-var portFromComando;
+//var portFromComando;
 var ports = [];
 var portExternals = {};
 let loadTime = new Date();
@@ -23,7 +23,6 @@ var testCommunicaction;
 var blocking=false;
 var comandosManager;
 var comandosMenu;
-var comandosCS;
 
 var jquery_link;
 var popper_link;
@@ -49,7 +48,7 @@ async function registerRemoteScript(code,host) {
     });
 }
 
-async function registerRemoteScriptP2P(code,csr,jsr,hostr) {
+function registerRemoteScriptP2P(code,csr,jsr,hostr) {
 
     if (registeredScript) {
         registeredScript.unregister();
@@ -60,21 +59,20 @@ async function registerRemoteScriptP2P(code,csr,jsr,hostr) {
     }
 }
 
-browser.runtime.onMessage.addListener(handleMessage);
+/******************************coneccion con content-script via port***/
 function connected(p){
   try{
 
-      console.log(p);
-      portFromCS = p;
-     if (p.name){
-      p.onMessage.addListener(function(m) {
-        let c = comandosCS.getCommand(m.type);
-        c.setPort(p);
-        c.doAction(m);
-      });
-     }
-      
-
+      if (p.sender.tab.id!=="undefined" && p.sender.tab.id!==null){
+        ports[p.sender.tab.id] = p    
+        portFromCS = ports[p.sender.tab.id];
+      }else{
+        console.log("No hay ningun conector disponible");
+        return null;
+      }
+      portFromCS.onMessage.addListener(function(m) {
+        //console.log("In background script, received message from content script");
+      });  
   }catch(e){
       console.log(e);
   }
@@ -98,8 +96,10 @@ function sendCommand(jsoncmd){
 
     }else{
         let peers_conectados = myPeer.getPeersOnline();
+        //console.log(peers_conectados);
         for (let item in peers_conectados){
           if (peers_conectados.hasOwnProperty(item)){
+            //console.log('Key is: ' + item + '. Value is: ' + peers_conectados[item]);
             if (peers_conectados[item].username!==myPeer.getUsername() && peers_conectados[item].mode!=='manager'){
               data_json={
                 type:'callCommand',
@@ -114,26 +114,26 @@ function sendCommand(jsoncmd){
     }
     
   } catch(e) {
-    console.log("Error al realizar send command");
-    console.log(e);
+    throw new Error(e);
   }
 }
 
 browser.runtime.onConnect.addListener(connected);
 
+/*************************conexion con addons externo**************************/
 browser.runtime.onConnectExternal.addListener((port) => {
     
     portExternals[port.sender.id] = port;
     
     myPeer.setPortExternals(portExternals);
     
-    portFromComando = portExternals[port.sender.id];
+    let portFromComando = portExternals[port.sender.id];
     
     portFromComando.onMessage.addListener((msj) => {
       
-      let data_aux = JSON.parse(msj);
+      let msjObj = JSON.parse(msj);
 
-      comandosManager.getCommand(data_aux.type).execute(data_aux,myPeer,portFromComando,sendPeerData);
+      comandosManager.getCommand(msjObj.type).execute(msjObj,myPeer,portFromComando,sendPeerData);
       
     });
 
@@ -148,6 +148,15 @@ function onCreated() {
   }
 }
 
+function listUsersConnected(){
+  myPeer.sendData(
+        {
+             type: "listUsers",
+             who:"sample"
+        }
+    );
+};
+
 browser.menus.create({
   id: "open",
   title: "Abrir todo.",
@@ -160,11 +169,15 @@ browser.menus.create({
   contexts: ["all"]
 }, onCreated);
 
-browser.menus.create({
-  id: "admin",
-  title: "panelcontrol.",
-  contexts: ["all"]
-}, onCreated);
+// https://gist.github.com/Rob--W/ec23b9d6db9e56b7e4563f1544e0d546
+function escapeHTML(str) {
+    // Note: string cast using String; may throw if `str` is non-serializable, e.g. a Symbol.
+    // Most often this is not the case though.
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;")
+        .replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
 function onError(error){
   console.log(`Error: ${error}`);
@@ -178,12 +191,13 @@ browser.menus.onClicked.addListener(function(info, tab) {
     comando.setPort(portFromCS);
     comando.doAction();
   } catch(e) {
-    console.log("Error al realizar operacion con el Menu desde BACK.");
-    console.error(e);
+   throw new Error(e);
   }
 
 });
 
+/*************************fin menus*******************/
+/*************solicitar action******************/
 function sendActionPeer(idpeer,action,website){
   
   let qservice = {
@@ -193,6 +207,7 @@ function sendActionPeer(idpeer,action,website){
     url:website
   };
 
+  //channelPeers[idpeer].send(JSON.stringify(qservice));
   sendByDC(idpeer,JSON.stringify(qservice));
 
 }
@@ -206,7 +221,7 @@ function sendImagePeer(idpeer,images){
     };
     sendByDC(idpeer,JSON.stringify(objImage));
   }catch(e) {
-    console.log(e);
+    throw new Error(e);
   }
 }
 
@@ -215,15 +230,18 @@ function sendPeerData(id,obj){
     let msj=JSON.parse(obj);
     let datamsj=null;
     if (id=="All"){
+      //Si es broadcast considero si es una extension o solo peers clasicos
+      //requiere refactor para cambio de nombre
       if (msj.extensioname){
         sendBroadcast(obj);
       }else{
         //Es un request
         datamsj = new RequestData(obj);
-        console.log("Envio datos broadcast parse");
         sendBroadcast(datamsj.toJson());
       }
     }else{
+      //Si un mensaje para una extesion solo realizo el forward
+      //si es un mensaje para un componente interno genero un request nativo
       if (msj.extensioname){
           myPeer.sendByDC(id,obj);
       }else{
@@ -233,8 +251,7 @@ function sendPeerData(id,obj){
     }
   }catch(e){
     // statements
-    console.log("No es posible enviar datos al Peer");
-    console.log(e);
+    throw new Error(e);
   }
 }
 
@@ -244,36 +261,37 @@ function sendBroadcast(obj){
     let channel = myPeer.getChannelPeers();
     for (let i in peers_local){
       if (peers_local.hasOwnProperty(i)){
-          if (myPeer.getUsername()!== peers_local[i].getUsername() && channel[peers_local[i].getUsername()]!==null || (typeof channel[peers_local[i].getUsername()]!=="undefined")){
+          if (myPeer.getUsername()!==peers_local[i].getUsername() && 
+          channel[peers_local[i].getUsername()]!==null || 
+          (typeof channel[peers_local[i].getUsername()]!=="undefined")
+          ){
             myPeer.sendByDC(peers_local[i].getUsername(),obj);
           }
       }
     }
   } catch(e) {
-    console.log("Error al enviar sendbroadcast");
-    console.log(e);
+    throw new Error(e);
   }
 }
 
 function onInstalledNotification(details) {
-  browser.notifications.create('onInstalled', {
-    title: `Instalada WebExtension P2P version: ${manifestp2p.version}`,
-    iconUrl: browser.extension.getURL("icons/quicknote-48.png"),
-    message: `onInstalled has been called, background page loaded at ${loadTime.getHours()}:${loadTime.getMinutes()}`,
-    type: 'basic'
-  });
+  //reason
+  if (details){
+    browser.notifications.create('onInstalled', {
+      title: `Instalada WebExtension P2P version: ${manifestp2p.version}`,
+      iconUrl: browser.runtime.getURL("icons/quicknote-48.png"),
+      message: `onInstalled has been called, background page loaded at ${loadTime.getHours()}:${loadTime.getMinutes()}`,
+      type: 'basic'
+    });
+  }
+  
 }
 
 function handleUpdateAvailable(status,details) {
+  //console.log("si alguien recarga o actualiza nuevo contenido debe hacer algo:");
   console.log(status);
   console.log(details);
 }
-
-/*
-* Construccion de comandos para CS
-*/
-comandosCS = new CommandManagerCS();
-comandosCS.addCommand(new CommandQuery("query"));
 
 /*
 * construccion de comandos background
@@ -299,7 +317,6 @@ comandosMenu.addCommand(new CommandPanelScriptBack("panelscript"));
 comandosMenu.addCommand(new CommandDesconectarBack("desconectar"));
 comandosMenu.addCommand(new CommandClose("close"));
 comandosMenu.addCommand(new CommandOpen("open"));
-comandosMenu.addCommand(new CommandAdmin("admin"));
 comandosMenu.addCommand(new CommandIniciar("iniciar"));
 
 //iniciar();

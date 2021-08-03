@@ -1,6 +1,6 @@
 class WRTCPeerConnection {
 	
-	constructor(config=null){
+	constructor(config=false){
 
 		if (config){
 			this.peerconnection = new RTCPeerConnection(config);
@@ -8,8 +8,8 @@ class WRTCPeerConnection {
 			this.peerconnection = new RTCPeerConnection();
 		}
 
-		this.iceState=null;
-		this.sessionState=null;
+		this.iceState;
+		this.sessionState;
 	}
 
 	setRTCPeerConnection(p){
@@ -38,6 +38,9 @@ class WRTCPeerConnection {
 	handleCandidate(event,username,peer){
 		try {
 			if (event.candidate){
+				//Inicio de IP
+				//https://github.com/diafygi/webrtc-ips codigo sin eso
+				//El repo gihub esta deprecated.
 				let ip_regex;
 				let ip_addr;
 				try {
@@ -47,6 +50,9 @@ class WRTCPeerConnection {
 					//console.log("Regex ausente por IP.");
 				}
 				
+				//console.log("Ip desde onicecandidate createPeer: ");
+				//console.log(ip_addr);
+				//Fin IP
 				peer.setIP(ip_addr);
 
 				peer.sendData({
@@ -74,6 +80,8 @@ class WRTCPeerConnection {
 			let wrtc=this;
 			this.getRTCPeerConnection().setRemoteDescription(new RTCSessionDescription(data.offer))
 			.then((val)=>{
+				//console.log("Contenido de setRemoteDescription");
+				//console.log(val);
 				return wrtc.peerCreateAnswer(data,myPeer);
 			})
 			.catch(function(error){
@@ -82,8 +90,7 @@ class WRTCPeerConnection {
 			});
 
 		} catch(e) {
-			console.log("Error al realizar createAnswer");
-			console.error(e);
+			throw new Error(e);
 		}
 	}
 
@@ -91,15 +98,18 @@ class WRTCPeerConnection {
 	async peerCreateAnswer(data,myPeer){
 		try{
 			
-			let answertmp=null;
+			let answertmp={};
 			let wrtc=this;
 			
+			//this.sessionPeers[data.who].getRTCPeerConnection().createAnswer()
 			this.getRTCPeerConnection().createAnswer()
 			.then((answer)=>{
 				answertmp=answer;
+				//return myPeer.sessionPeers[data.who].getRTCPeerConnection().setLocalDescription(answer);
 				return wrtc.getRTCPeerConnection().setLocalDescription(answer);
 			  })
 			.then(function(val){
+				//console.log("Desde la promesa de answer: ");	
 				myPeer.sendData({
 					type: "answer",
 					answer: answertmp,
@@ -114,16 +124,31 @@ class WRTCPeerConnection {
 			});
 			
 		}catch (error){
-			console.log("Error al crear answer");
-			console.log(error);
+			throw new Error(error);
 		}
 	}
 
 	async peerCreateOffer(data,myPeer){
 		try{
 
-			let offertmp=null;
+			let offertmp={};
 			let wrtc=this;
+	
+			/*
+			let offer = await wrtc.getRTCPeerConnection().createOffer({"iceRestart":true})
+			await wrtc.getRTCPeerConnection().setLocalDescription(offer);
+
+			myPeer.sendData({
+				type: "offer",
+				offer: offertmp,
+				target: data.username,
+				who: myPeer.getUsername(),
+				id: myPeer.getCliendId(),
+				description: wrtc.getLocalDescription(),
+				natmode:myPeer.isNatEnable()
+			});
+			*/ //No funciona
+
 
 			wrtc.getRTCPeerConnection().createOffer({"iceRestart":true}).then((offer)=>{
 				offertmp=offer;
@@ -147,8 +172,7 @@ class WRTCPeerConnection {
 				});
 			
 		}catch(error) {
-			console.log("error al crear oferta");
-			console.log(error);
+			throw new Error(error);
 		}
 	}
 
@@ -158,6 +182,15 @@ class WRTCPeerConnection {
 			this.getRTCPeerConnection().onclose=function(event){
 			try {
 					
+					console.log("Usuario :",username);
+					
+					console.log("Cerro la conexion RTC");
+					
+					//console.log(event);
+
+					//console.log("SESSION STATE: ",peer.getSessionPeers()[username].getConnectionState().getName());
+
+					//console.log("ICE CONNECTION STATE: ",peer.getSessionPeers()[username].getIceConnectionState().getName());
 
 					peer.getPeersOnline().setModeSearch(new searchPolicyUser());
 					
@@ -166,11 +199,11 @@ class WRTCPeerConnection {
 					peer.getPeersOnline().deletePeer(user);
 
 				} catch (error) {
-					console.log("Error al tratar de cerrar RTC: ",error);
+					throw new Error(error);
 				}
 			}
 		} catch(e) {
-			console.error(e);
+			throw new Error(e);;
 		}
 		
 	}
@@ -185,8 +218,7 @@ class WRTCPeerConnection {
 
 		} catch(e) {
 			// statements
-			console.log("Error onnegotiationneeded");
-			console.error(e);
+			throw new Error(e);
 		}
 	};
 
@@ -197,7 +229,7 @@ class WRTCPeerConnection {
 			}
 		} catch(e) {
 			// statements
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -212,15 +244,14 @@ class WRTCPeerConnection {
 			};
 
 		} catch(e) {
-			console.log("Error al realizar onconnectionstatechange desde Wrapper");
-			console.error(e);
+			throw new Error(e);
 		}
 	}
 
 	oniceconnectionstatechange(username,data,peer){
 		try {
 
-			if (peer.getSessionPeers()[username] && peer.getSessionPeers()[username]!==null){
+			if (peer.getSessionPeers()[username]){
 				let wrtc=this;
 				this.getRTCPeerConnection().oniceconnectionstatechange=function(event){
 					wrtc.getIceConnectionState().setData(data);
@@ -228,7 +259,7 @@ class WRTCPeerConnection {
 				}
 			}
 		}catch(error){
-			console.error("Error peerIceConnectionStatechange: ",error);
+			throw new Error(error);
 		}
 	}
 
@@ -256,14 +287,12 @@ class WRTCPeerConnection {
 					};
 
 				}catch (error) {
-					console.log("Error ondatachannel event sobre WRTCPeerConnection");
-					console.log(error);
+					throw new Error(error);
 				}
 			};
 			
 		}catch(e){
-			console.log("Error al realizar ondatachannel");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -291,6 +320,26 @@ class WRTCPeerConnection {
 
 							console.log("ESTADO ICE: "+peer.getSessionPeers()[remoteuser].getIceConnectionState().getName());
 								
+								/*
+								
+								//Agregado
+								let browser = new BrowserData();
+								
+								let peerdata={
+									'id':peer.getCliendId(),
+									'username':peer.getUsername(),
+									'online':true,
+									'p2p':true,
+									'ip':"",
+									"spec":browser,
+									'mode':peer.getMode()
+								}
+								
+								let request = new RequestData(JSON.stringify({type:'checkpeer',data:peerdata,peersource:peer.getUsername()}));
+								peer.sendByDC(remoteuser,request.toJson());
+								
+								*/
+								
 						}
 					}
 				}
@@ -299,8 +348,7 @@ class WRTCPeerConnection {
 			  	peer.showMessageConnection({title:'Estado de canal de comunicación no activo.',body:'El usuario remoto: '+remoteuser+' no tiene un canal de comunicación accesible.'});
 			  }
 		} catch(e) {
-			console.log("Error al utilizar handleReceiveChannelStatusChange desde WRTCPeerConnection");
-			console.error(e);
+			throw new Error(e);
 		}
 	  
 	};
@@ -334,11 +382,17 @@ class WRTCPeerConnection {
 					}
 					break;
 
+				/*
+				case "Service":
+					let  servicedefault = new ServiceData(remoteData.data);
+					servicedefault.actionDefault(remoteData,peer);
+					break;
+				*/
+
 			}
 
 		} catch(e) {
-			console.log("Falla Handle Receive Message")
-			console.error(e);
+			throw new Error(e);
 		}
 	}
 
@@ -347,17 +401,19 @@ class WRTCPeerConnection {
 
 		try {
 			this.peerconnection.close();
-			this.stateIce=null;
+			this.stateIce={};
 		} catch(e) {
-			console.log("Error al utilizar close");
-			console.log(e);
+			throw new Error(e);
 		}
 
 	}
 
 	getIceConnectionState(){
 		try {
+			//El estado depende del peer. Este lo gestiona internamente la interfaz de WebRTC ICE
+			//Por lo tanto necesitamos gestionar con un Factory que nos permita operar y representarlo como un objeto.
 			if (this.iceState){
+				//A falta de un objeto de estado y a fin de faciliar la tarea de gestion sobre la conexion
 				if (this.iceState.getName()===this.peerconnection.iceConnectionState){
 					return this.iceState;
 				}
@@ -366,14 +422,17 @@ class WRTCPeerConnection {
 			this.iceState=factorystate.getState(this.peerconnection.iceConnectionState);
 			return this.iceState;
 		} catch(e) {
-			console.log("Error al utilizar getIceConnectionState");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
 	getConnectionState(){
 		try {
+			//El estado depende del peer. Este lo gestiona internamente la interfaz de WebRTC connection
+			//Por lo tanto necesitamos gestionar un Factory que nos permita operar y representarlo como un objeto.
+			//
 			if (this.sessionState){
+				//A falta de un objeto de estado y a fin de faciliar la tarea de gestion sobre la conexion
 				if (this.sessionState.getName()===this.peerconnection.connectionstate){
 					return this.sessionState;
 				}
@@ -382,8 +441,7 @@ class WRTCPeerConnection {
 			this.sessionState=factorystate.getState(this.peerconnection.connectionstate);
 			return this.sessionState;
 		} catch(e) {
-			// statements
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 

@@ -13,7 +13,7 @@ function loadP2P(cantidadConectada){
 		let socket=peer_back.getConnection();
 		name_peer.innerText="Name: "+peer_back.getUsername();
 		
-		if (socket!==null){
+		if (socket){
 			if (socket.getStateSocket()===1){
 				estado.style.color='green';
 				estado.innerText="Online with: ";

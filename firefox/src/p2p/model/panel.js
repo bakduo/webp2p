@@ -30,8 +30,7 @@ class PanelScript{
         	}
         	return createData;
 		}catch(e) {
-			console.log("Error al generar json de window");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -52,7 +51,7 @@ class PanelScript{
 
 		} catch(e) {
 			// statements
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 

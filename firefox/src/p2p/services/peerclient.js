@@ -15,33 +15,35 @@ class PeerClient{
 		this.servicebByPeers={};
 		this.peerEnable=false;
 		
-		this.peerConnectionConfig = {
-			iceServers: [
-			  {
-				urls: '',
-				username: '',
-				credential: ''
-			  },
-			  {
-				urls: '',
-				username: '',
-				credential: ''
-			  }
-			],
-			iceTransportPolicy:'all'
-		}
+		// this.peerConnectionConfig = {
+		// 	iceServers: [
+		// 	  {
+		// 		urls: 'stun:server-test2.oncosmos.com:5349',
+		// 		username: 'oncosmosuser',
+		// 		credential: 'lifia19'
+		// 	  },
+		// 	  {
+		// 		urls: 'turn:server-test2.oncosmos.com:3478',
+		// 		username: 'oncosmosuser',
+		// 		credential: 'lifia19'
+		// 	  }
+		// 	],
+		// 	iceTransportPolicy:'all'
+		// }
+
+		this.peerConnectionConfig = {};
 		
 		this.peersOnline=new CollectionPeers();
 		this.usernameVirtual = ""; 
 		this.username="";
 		this.cliendId=-1;
 		this.success=false;
-		this.receiveChannel=null;
+		this.receiveChannel=false;
 		this.conected=false;
-		this.connection = null;
+		this.connection = false;
 		this.actions=[];
 		this.msjQueue=[];
-		this.extensions={};
+		this.extensions=false;
 		this.extensions_message={};
 		this.sessionForPeer={};
 		this.loadId();
@@ -57,10 +59,10 @@ class PeerClient{
 		this.natEnable=false;
 		this.msjData=[];
 		this.msjDataExtension=[];
-		this.testCommunicaction=null;
+		this.testCommunicaction={};
 		this.signal_server_url="";
 		this.eliminarPeers=[];
-		this.urlsignalserver="";
+		this.urlsignalserver="wss://signal01.oncosmos.com:64889";
 		this.portExternals={};
 		this.enable=false;
 
@@ -141,7 +143,7 @@ class PeerClient{
 	}
 
 	getServicePeer(name){
-		let ok=null;
+		let ok=false;
 		if (this.servicebByPeers[name]){
 			ok=this.servicebByPeers[name];
 		}
@@ -190,17 +192,15 @@ class PeerClient{
 					return peer.getConnection();
 				})
 				.catch((error)=>{
-					console.log(error);
-					console.log("Error al realizar conexion via Socket hacia el servidor señalizador.");
-					return null;
+					throw new Error(error);
 				});
 			}else{
 				console.log("PEER DISABLED.");
 			}
 			
 
-		} catch (error) {
-			console.log("Error al realizar conection al signal server");
+		} catch (e) {
+			throw new Error(e);
 		}
 	}
 
@@ -208,17 +208,16 @@ class PeerClient{
 		try {
 			let connection = this.getConnection();
 			connection.down(this,type);
-		} catch (error) {
-			console.log("Error al desconectar signal dserver");
+		} catch (e) {
+			throw new Error(e);
 		}
 	}
 
 	rcvSignalMessage(data,instancesocket){
 		try {
 			this.commandMesage.getCommand(data.type).execute(data,instancesocket,this);
-		} catch (error) {
-			console.log("Error al ejecutar mensaje rcvSignalMessage");
-			console.error(error);
+		} catch (e) {
+			throw new Error(e);
 		}
 	}
 
@@ -226,8 +225,7 @@ class PeerClient{
 		try {
 			return JSON.parse(JSON.stringify(this.getPeersOnline()));
 		} catch(e) {
-			console.log("Error al realizar clone peers online.");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -238,8 +236,11 @@ class PeerClient{
 			
 			let collection = this.peersOnline.getCopyCollection();
 
+			//console.log(collection);
+
 			collection.forEach(item => {
 				if (!item.getP2P() && item.getOnline() && item.getMode()!=='manager' && item.getMode()!=='alone' && item.getUsername()!==this.getUsername()){
+					//console.log(item);
 					this.createPeer(item,false);
 				}
 			});
@@ -247,8 +248,7 @@ class PeerClient{
 		  
 		  
 		} catch(e) {
-		  console.log("Error al conectar usuarios.");
-		  console.log(e);
+			throw new Error(e);
 		}
 	};
 
@@ -259,13 +259,14 @@ class PeerClient{
 			
 			collection.forEach(item => {
 				if (!item.getP2P() && item.getOnline() && item.getMode()!=='manager' && item.getMode()!=='alone'){
+					//console.log(item);
 					this.createPeer(item,item.getP2P());
 				}
 			}); 
 
 
-		} catch (error) {
-			console.log("Error al realizar conection P2P con usuario remoto.");
+		} catch (e) {
+			throw new Error(e);
 		}
 	}
 
@@ -278,8 +279,8 @@ class PeerClient{
 			
 			return tmp.getMode();
 
-		} catch (error) {
-			console.log("Error la realizar getModePeerOnline");
+		} catch (e) {
+			throw new Error(e);
 		}
 	}
 
@@ -294,20 +295,26 @@ class PeerClient{
 	getMsjData(){
 		try {
 		  let max = this.msjData.length;
+		  //console.log("cantidad de mensajes: "+max);
 		  let obj={};
 		  for (let i=0;i<max;i++){
+			//console.log(typemsj);
+			let status = false;
+			if (this.msjData[i].getState()){
+				status = this.msjData[i].getState().getStatus();
+			}
 			obj[i]={
 			  'id':i,
 			  'type':this.msjData[i].getType(),
 			  'data':this.msjData[i].getData(),
-			  'status':this.msjData[i].getState().getStatus()
+			  'status': status
 			};
+			//console.log(obj[i]);
 		  }
 		  return obj;
 	  
 		} catch(e) {
-		  console.log("NO es posible acceder a la lista de mensajes del peer");
-		  console.log(e);
+			throw new Error(e);
 		}
 	  }
 	  
@@ -317,19 +324,24 @@ class PeerClient{
 		  console.log("cantidad de mensajes: "+max);
 		  let obj={};
 		  for (let i=0;i<max;i++){
+			//console.log(typemsj);
+			let status =false;
+			if (this.msjDataExtension[i].getState()){
+				status = this.msjDataExtension[i].getState().getStatus();
+			}
 			obj[i]={
 			  'id':i,
 			  'type':this.msjDataExtension[i].getType(),
 			  'data':this.msjDataExtension[i].getData(),
-			  'status':this.msjDataExtension[i].getState().getStatus(),
+			  'status':status,
 			  'extensioname':this.msjDataExtension[i].getExtensionName(),
 			  'extensionId':this.msjDataExtension[i].getExtensionId()    
 			};
+			//console.log(obj[i]);
 		  }
 		  return obj;
 		} catch(e) {
-		  console.log("NO es posible acceder a la lista de mensajes del peer");
-		  console.log(e);
+			throw new Error(e);
 		}
 	  }
 	  
@@ -346,8 +358,7 @@ class PeerClient{
 		  return vector;
 
 		} catch(e) {
-		  console.log("Error al crear una lista de mensajes para la extension por paramentro.");
-		  console.log(e);
+			throw new Error(e);
 		}
 	  }
 
@@ -356,8 +367,7 @@ class PeerClient{
 		  console.log("Aceptar mensajes");
 		  this.msjData[idmsj].changeState(new onAccept());
 		} catch(e) {
-		  console.log("Error al aceptar el mensaje");
-		  console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -366,17 +376,15 @@ class PeerClient{
 			//console.log("Aceptar mensajes extension");
 			this.msjDataExtension[idmsj].changeState(new onAccept());
 		  } catch(e) {
-			console.log("Error al aceptar el mensaje");
-			console.log(e);
+			throw new Error(e);
 		  }
 	}
 
 	doActionMessage(portFromCS,idmsj){
 		try{
 			this.msjData[idmsj].do(portFromCS);
-		} catch (error) {
-			console.log("Error doAcionMessage");
-			console.log(error);	
+		} catch (e) {
+			throw new Error(e);
 		}
 	}
 
@@ -384,9 +392,8 @@ class PeerClient{
 		try{
 
 			this.msjDataExtension[idmsj].do(port[idextension]);
-		} catch (error) {
-			console.log("Error doAcionMessage");
-			console.log(error);	
+		} catch (e) {
+			throw new Error(e);
 		}
 	}
 	  
@@ -395,17 +402,16 @@ class PeerClient{
 		  //console.log("Deny mensajes");
 		  this.msjData[idmsj].changeState(new onDeny());
 		} catch(e) {
-		  console.log("Error al denegar el mensaje");
-		  console.log(e);
+			throw new Error(e);
 		}
 	  }
 	   
 	  denyPeerMessajeExtension(idmsj){
 		try {
+		  //console.log("Deny mensajes extension");
 		  this.msjDataExtension[idmsj].changeState(new onDeny());
 		} catch(e) {
-		  console.log("Error al denegar el mensaje");
-		  console.log(e);
+			throw new Error(e);
 		}
 	  }
 
@@ -448,8 +454,7 @@ class PeerClient{
 			    type: 'basic'
 		  });
 		} catch(e) {
-			console.error("Error al realizar visualizacion de mensajes de conexion.");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -469,41 +474,51 @@ class PeerClient{
 					if (this.channelPeers[this.eliminarPeers[i].getUsername()]){
 						try {
 							await this.channelPeers[this.eliminarPeers[i].getUsername()].close();
+							//delete this.channelPeers[this.eliminarPeers[i].getUsername()];
 						} catch(e) {
-							console.error("No es posible cerrar el canal");
-							console.log(e);
+							throw new Error(e);
 						}
 					}
 					
 					if (this.sessionPeers[this.eliminarPeers[i].getUsername()]){
 						try {
 							await this.sessionPeers[this.eliminarPeers[i].getUsername()].close();
+							//delete this.sessionPeers[this.eliminarPeers[i].getUsername()];
 						}catch(e){
 							// statements
-							console.error("No es posible cerrar RTC");
-							console.log(e);
+							throw new Error(e);
 						}
 					}
 
 				}
 			}
 			this.setPeersDeleted();
-		} catch (error) {
-			console.error("No es posible realizar checkDelete",error);
+		} catch (e) {
+			throw new Error(e);
 		}
 	}
 
 	async onOffer(data){
 		try {
 
+			//console.log("oferta de : "+data.who+" para : "+data.target);
 			if (this.existPeerJsonArray(this.sessionPeers,data.who) || this.existPeerJsonArray(this.channelPeers,data.who)){
 				console.log("Ya existe una sesion no se puede generar otra");
+				//La regenera.
+				//await this.reOffer(data.who,data);
+				//Agregado
+				//let peer = this.getDataPeerOnlineSS(data.who);
+				//this.setStateP2P(peer.id,false);
+				//fin agregado para volver a conectar.
 				return -1;
 			}
 
 			let myPeer=this;
 	  
-			if (this.sessionPeers[data.who]==null || (typeof sessionPeers[data.who]==="undefined")){
+			if (this.sessionPeers[data.who]===null || (typeof sessionPeers[data.who]==="undefined")){
+						  
+						  //console.log("recibe oferta de usuario pero el peer no tiene sesion activa y la CREA...");
+						  //La oferta de conexion es modo nat/lan, es necesario saber el modo de conexion para poder conectarnos
 						  if(data.natmode){
 							this.enableNat();
 							this.sessionPeers[data.who] = new WRTCPeerConnection(this.peerConnectionConfig);
@@ -539,16 +554,17 @@ class PeerClient{
 			}else{
 			  console.log("Existe peer para: "+data.who);
 			}
+			//console.log("Aqui tiene que enviar ANSWER...");
 			await this.sessionPeers[data.who].createAnswer(data,myPeer);
 
 		}catch(e){
-		  console.log("Error al realizar Offer");
-		  console.log(e);
+			throw new Error(e);
 		}
 	};
 
 	deleteItem(username,jsonarray){
 		try {
+			//let cloneJson=JSON.parse(JSON.stringify(jsonarray));
 			let clone={};
 			for (let i in jsonarray){
                 if (jsonarray.hasOwnProperty(i)){
@@ -559,7 +575,7 @@ class PeerClient{
             };
 			return clone;
 		} catch (error) {
-			console.log("Error la realizar getModePeerOnline");
+			throw new Error(e);
 		}
 	
 	}
@@ -567,8 +583,12 @@ class PeerClient{
 	async deletePeer(data){
 		try{
 
-			if (data===null||data===undefined){
-				return null;
+			//await this.deleteUser(data.id);
+			//this.setPeersOnline(this.deleteItemOnline(data.id,this.getPeersOnline()));
+			//Aqui viene data.id y modo
+			//console.log(data);
+			if (data===null|| (typeof data==undefined)){
+				return false;
 			}
 	
 				try {
@@ -576,7 +596,7 @@ class PeerClient{
 						await this.channelPeers[data.getUsername()].close();
 					}
 				}catch(error) {
-					console.error("No existe usuario en el canal de comunicacion: ",error)
+					throw new Error(e);
 				}
 
 				try {
@@ -584,21 +604,21 @@ class PeerClient{
 						await this.sessionPeers[data.getUsername()].close();
 					}
 				}catch(error) {
-					console.log("No existe sesion del usuario: ",error);
+					throw new Error(e);
 				}
 
 				try {
 					this.channelPeers=this.deleteItem(data.getUsername(),this.channelPeers);
+					//delete this.channelPeers[data.username];
 				} catch(e) {
-					console.log("No existe canal para eliminar");
-					console.error(e);
+					throw new Error(e);
 				}
 
 				try {
 					this.sessionPeers=this.deleteItem(data.getUsername(),this.sessionPeers);
+					//delete this.sessionPeers[data.username];
 				} catch(e) {
-					console.log("No existe sesion para eliminar");
-					console.error(e);
+					throw new Error(e);
 				}
 
 				try {
@@ -609,13 +629,11 @@ class PeerClient{
 						}
 					}
 				}catch(e){
-					console.log("No existe username en lista online");
-					console.error(e);
+					throw new Error(e);
 				}
 
 		} catch (error) {
-		  console.log("No es posible desconectar el peer de forma completa.");
-		  console.log(error);
+			throw new Error(e);
 		}
 	  }
 	  
@@ -626,9 +644,22 @@ class PeerClient{
 				this.closeSessionUser(j);
 		  	}
 
+		  /*
+		  for (let i in this.channelPeers){
+				if (this.channelPeers.hasOwnProperty(i)){
+					await this.channelPeers[i].close();		
+				}
+		  }
+
+		
+		  for (let j in this.sessionPeers){
+				if (this.sessionPeers.hasOwnProperty(j)){
+					await this.sessionPeers[j].close();		
+				}
+		  }*/
+
 		} catch (error){
-		  console.error("No es posible eliminar sesion del peer: ");
-		  console.error(error);
+			throw new Error(e);
 		}
 	}
 
@@ -637,10 +668,18 @@ class PeerClient{
 
 			this.closeChannelPeer(username);
 			this.closeSessionPeer(username);
+			/*
+			if (this.channelPeers[username]){
+				await this.channelPeers[username].close();			
+			}
+
+			if (this.sessionPeers[username]){
+				await this.sessionPeers[username].close();	
+			}
+			*/		
 
 		} catch (error){
-		  console.error("No es posible eliminar sesion del peer: ");
-		  console.error(error);
+			throw new Error(e);
 		}
 	}
 
@@ -652,8 +691,7 @@ class PeerClient{
 			}
 
 		} catch (error){
-		  console.error("No es posible eliminar sesion del peer: ");
-		  console.error(error);
+			throw new Error(e);
 		}
 	}
 
@@ -665,8 +703,7 @@ class PeerClient{
 			}
 			
 		} catch (error){
-		  console.error("No es posible eliminar sesion del peer: ");
-		  console.error(error);
+			throw new Error(e);
 		}
 	}
 
@@ -676,8 +713,7 @@ class PeerClient{
 		  this.conectAllPeers();  
 
 		} catch (error){
-		  console.log("No es posible abrir la conexión del peer: ");
-		  console.error(error);
+			throw new Error(e);
 		}
 	}
 	
@@ -687,24 +723,32 @@ class PeerClient{
 	  
 	async onCandidate(data){
 
+		//console.log("Metodo onCandidate:");
+		//await this.sessionPeers[data.who].getRTCPeerConnection().addIceCandidate(new RTCIceCandidate(data.candidate));
+		//Restart ICE:
+		
 		//fix = https://stackoverflow.com/questions/61292934/webrtc-operationerror-unknown-ufrag	
  		data.candidate.usernameFragment = null;
 		//end fix
 
 		let candidate = new RTCIceCandidate(data.candidate);
+		//let receivers = this.sessionPeers[data.who].getRTCPeerConnection().getReceivers();
 		let peer=this;
+
+		//console.log("Cantidate desde señalizador: "+data.usernameFragment);
 
 		let abortCandidate=false;
 		
+		//let externalCandidate=null;
+
 		if (!abortCandidate){
 			this.sessionPeers[data.who].getRTCPeerConnection().addIceCandidate(candidate)
 			.then(valor=>{
 				this.sessionPeers[data.who].getIceConnectionState().setData(data);
 				this.sessionPeers[data.who].getIceConnectionState().doCandidate(peer);
 			})
-			.catch(error=>{
-				console.log("Error al utilizar onCandidate sobre receiver.");
-				console.error(error);
+			.catch(e=>{
+				throw new Error(e);
 			});
 		}
 
@@ -716,8 +760,7 @@ class PeerClient{
 		  console.log("Signalingstatechange: ");
 	  
 		} catch(e) {
-		  console.log("Error con Signalingstatechange");
-		  console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -728,8 +771,7 @@ class PeerClient{
 		  this.portExternals[msj.id].postMessage(objdata);
 	  
 		} catch(e) {
-		  console.log("Error al enviar peticion hacia la extension");
-		  console.log(e);
+			throw new Error(e);
 		}
 	  }
 	  
@@ -739,20 +781,33 @@ class PeerClient{
 		try {
 
 		  if (this.channelPeers[id] && this.channelPeers[id]!==null && (typeof this.channelPeers[id]!=="undefined")){
-			this.channelPeers[id].getState().operChannel(this,msg,id);
+			  if (this.channelPeers[id].getState()){
+				this.channelPeers[id].getState().operChannel(this,msg,id);
+			  }
+			
 		  }else{
 			console.log("No hay datachannel para :"+id);
 		  }
 
 		} catch(e) {
-		  console.log("Error al utilizar envio de datos desde un channel.");
-		  console.log(e);
+			throw new Error(e);
 		} 
 
 	}
 	  
 	existPeerJsonArray(jsonarray,username){
 		try {
+		/*
+			let ok=false;
+		for (let i in jsonarray){
+			if (jsonarray.hasOwnProperty(i)){
+				if (i === username){
+				ok=true;
+				break;
+				}
+			}
+		}
+		*/
 
 		if (jsonarray[username]===null || jsonarray[username]==='undefined' || jsonarray[username]===undefined || ((typeof jsonarray[username]) === undefined)){
 			return false;
@@ -760,8 +815,7 @@ class PeerClient{
 		return true;
 
 		} catch(e) {
-		console.log("Error al realizar session peer search");
-		console.log(e);
+			throw new Error(e);
 		}
 	  }
 	
@@ -808,8 +862,7 @@ class PeerClient{
 			this.sessionPeers[data.getUsername()].peerCreateOffer(data,myPeer);
 
 		}catch(e){
-		  console.log("Error al crearPeer");
-		  console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -826,8 +879,7 @@ class PeerClient{
 			});
 
 		} catch(e) {
-			console.log("ERROR sendOffer.");
-			console.error(e);
+			throw new Error(e);
 		}
 		
 	}
@@ -839,14 +891,20 @@ class PeerClient{
 	getSessionsForUser(username){
 		try {
 
-				if (this.existPeerJsonArray(this.sessionForPeer,username)){
-					return this.sessionForPeer[username];
-				}
-				
-				return null;
+			/*
+			if (this.sessionForPeer[username]!==null || this.sessionForPeer[username]!=='undefined' || 
+				this.sessionForPeer[username]!==undefined || ((typeof this.sessionForPeer[username]) !== undefined)){
+
+			*/
+			
+			if (this.existPeerJsonArray(this.sessionForPeer,username)){
+				return this.sessionForPeer[username];
+			}
+
+			throw new Error("No existe session de usuario");
+			
 		} catch(e) {
-			console.log("Error al realizar pedido de sessiones del peer.");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -859,6 +917,7 @@ class PeerClient{
 			let existe=false;
 			let peer_item=null;
 
+			//if (this.sessionForPeer[data.source]===null || this.sessionForPeer[data.source]==='undefined' || this.sessionForPeer[data.source]===undefined || ((typeof this.sessionForPeer[data.source]) === undefined)){
 			if (!this.existPeerJsonArray(this.sessionForPeer,data.source)){	
 				peer_item={
 					username:data.username,
@@ -870,6 +929,7 @@ class PeerClient{
 			}else{
 				//Agrega sessiones que no existan
 				for (index=0;index<this.sessionForPeer[data.source].length;index++){
+						//console.log(this.sessionForPeer[data.source].session[index]);
 						if (this.sessionForPeer[data.source][index].username===data.username){
 							existe=true;
 							break;
@@ -885,8 +945,7 @@ class PeerClient{
 			}
 			
 		} catch(e) {
-			console.log("Error al agregar session al peer");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -909,12 +968,12 @@ class PeerClient{
 
 	addSession(data){
 		try{
+			//console.log("Addsession");
 			this.sessionPeers[data.username].getIceConnectionState().setData(data);
 			this.sessionPeers[data.username].getIceConnectionState().doSession(this);
 
 		}catch(e){
-			console.log("Error al realizar agregar session del peer.");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -936,8 +995,7 @@ class PeerClient{
 			this.sendData(obj);
 
 		} catch(e) {
-			console.log("Error al realizar setmode");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -957,8 +1015,7 @@ class PeerClient{
 			}
 
 		} catch(e) {
-			console.log("Error al realizar broadcast update.");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -971,7 +1028,10 @@ class PeerClient{
 	}
 
 	getConnection(){
-		return this.connection;
+		if (this.connection){
+			return this.connection;
+		};
+		return false;
 	}
 
 	setUserNameVirtual(name){
@@ -987,7 +1047,7 @@ class PeerClient{
 			this.username = Math.random().toString(36).substring(7);
 			localStorage.setItem("username", this.username);	
 		}catch(e){
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -999,7 +1059,7 @@ class PeerClient{
 				this.cliendId = idaux;
 			}
 		}catch(e){
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -1014,7 +1074,7 @@ class PeerClient{
 			}
 
 		}catch(e){
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -1075,8 +1135,9 @@ class PeerClient{
 		try{
 			this.cliendId = id
 			localStorage.setItem("clientid", id);
+			//browser.storage.local.set({'clientid':id});
 		}catch(e){
-			console.log(e);
+			throw new Error(e);
 		}
 		
 	}
@@ -1100,7 +1161,7 @@ class PeerClient{
 	sendData(obj){
 		try {
 			let connectionWS = this.getConnection();
-			if (connectionWS!==null){
+			if (connectionWS){
 				let socket = connectionWS.getConnection();
 				if (socket!==null){
 					socket.send(JSON.stringify(obj));
@@ -1112,11 +1173,11 @@ class PeerClient{
 			}
 		}catch(e){
 			// statements
-			console.log("Error al utilizar SendData en Peer class");
-			console.error(e);
+			throw new Error(e);
 		}
 	}
 
+	//fuera de servicio
 	loginPeer(){	
 		this.sendData(
             {
@@ -1127,6 +1188,7 @@ class PeerClient{
 		console.log("Usuario envio login.");
 	};
 
+	//fuere de servicio
  	onLogin(success,id,username){
 
 	   if (success){
@@ -1144,9 +1206,8 @@ class PeerClient{
 	  try {
 	    const identity = await pc.peerIdentity;
 	    return identity;
-	  } catch(err) {
-	    console.log("Error identifying remote peer: ", err);
-	    return null;
+	  } catch(e) {
+	    throw new Error(e);
 	  }
 	}
 
@@ -1157,8 +1218,8 @@ class PeerClient{
 			this.peersOnline.setModeSearch(new searchPolicyUser());
 			return this.peersOnline.searchPeer(username);
 
-		} catch (error) {
-			console.log("No existe el peer");
+		} catch (e) {
+			throw new Error(e);
 		}
 	}
 	getRemoteUsername(id){
@@ -1169,8 +1230,7 @@ class PeerClient{
 			return this.peersOnline.searchPeer(id);
 
 		}catch(e){
-			console.log("codigo de usuario remoto no existe");
-			console.error(e);
+			throw new Error(e);
 		}
 	}
 
@@ -1185,7 +1245,7 @@ class PeerClient{
 
 
 		} catch(e) {
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -1203,7 +1263,7 @@ class PeerClient{
 			
 			let peeronline = this.peersOnline.searchPeer(username);
 			
-			if (peeronline!==null){
+			if (peeronline){
 
 				this.sessionPeers[username].getIceConnectionState().setP2PInternal(this,peeronline.getId());
 	
@@ -1216,21 +1276,30 @@ class PeerClient{
 					this.addSession(objsession);
 				}else{
 					this.closeSessionUser(username)
+					/*
+					this.deleteSession({
+						username:username,
+						id:peeronline.getId(),
+						source:this.getUsername()
+					});
+					*/
 				}
 			}
 
 		} catch(e) {
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 	
 	setStateP2P(id,state){
 				
+		console.log("CAMBIO ESTADO: ",state);
+
 		this.peersOnline.setModeSearch(new searchPolicyId());
 		
 		let user = this.PeersOnline.searchPeer(id);
 
-		if (user!==null){
+		if (user){
 			if (state){
 				user.setP2P(false);
 			}else{
@@ -1273,13 +1342,13 @@ class PeerClient{
 			if (tmp){
 				ok=true;
 				this.peersOnline.deletePeer(tmp);
+				//this.peersOnline.setCollection(this.peersOnline.deletePeer(tmp));
 			}else{
 				console.log("No existe user online: ",id);
 			}
 			return ok;
 		} catch(e) {
-			console.log("No existe ningun peer para eliminar.");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -1293,13 +1362,26 @@ class PeerClient{
 		dataextension['mode']=this.getMode();
 		dataextension['source']=this.getUsername();
 		dataextension['puerto_id']=dataextension.id;
+		//patch siempre actualizar.
 		this.extensions[dataextension.name]=dataextension;
 		this.addServiceOfPeer(this.getUsername(),{peername:this.getUsername(),name:dataextension.name});
 
+		/* //04/05/2020
+		if (this.extensions[dataextension.name]==null || this.extensions[dataextension.name]===undefined || !(typeof this.extensions[dataextension.name] === "unavailable")){
+		this.extensions[dataextension.name]=dataextension;
+		}else{
+		if (this.extensions[dataextension.name]){
+			console.log("Extension ya agregada");
+			
+		}else{
+			console.log("sin dato");
+		}
+		}
+		*/
 	}
 
 	searchExtension(name){
-		let resultado=null;
+		let resultado=false;
 		for (let i in this.extensions){
 			if (this.extensions.hasOwnProperty(i)) {
 				if (name===i){
@@ -1311,15 +1393,40 @@ class PeerClient{
 		return resultado;
 	}
 
+	/*
+	existExtension(name){
+			let ok=false;
+			for (let i in this.extensions){
+			    if (this.extensions.hasOwnProperty(i)) {
+			    	if (name===i){
+			    		ok=true
+			    		break;
+			    	}
+			    }
+			}
+			return ok;
+	}
+	*/
+
 	getPortIdOfExtension(name){
 		
-		let id=-1;
 		let item = this.searchExtension(name);
-		if (item!==null){
+		if (item){
 			return item.puerto_id
 		}
 		return item;
 
+		/*
+		for (let i in this.extensions){
+			if (this.extensions.hasOwnProperty(i)) {
+				if (name===i){
+					id=this.extensions[i].puerto_id;
+					break;
+				}
+			}
+		}
+		return id;
+		*/
 	}	
 
 	getExtensions(){
@@ -1327,7 +1434,7 @@ class PeerClient{
 	}
 
 	addMessageExtension(name,msj){
-		if (this.searchExtension(name)!==null){
+		if (this.searchExtension(name)){
 			let backup=this.extensions_message[name];
 			if (backup){
 				backup.push(msj);

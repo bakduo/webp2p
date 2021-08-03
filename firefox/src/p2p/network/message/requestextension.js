@@ -3,6 +3,7 @@ class RequestDataExtension extends DataMsj{
 	constructor(obj){
 		try {
 			super(obj);
+			//this.requestData={};
 			this.name="RequestDataExtension";
 			this.source="";
 			this.destiny="";
@@ -10,8 +11,7 @@ class RequestDataExtension extends DataMsj{
 			this.extensionId=null;
 
 		} catch(e) {
-			console.log("Error al crear request data extension.");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -51,8 +51,6 @@ class RequestDataExtension extends DataMsj{
 		try {
 			//Esto podria variar en un futuro
 
-			let obj=JSON.parse(this.getData());
-
 			let objrequest={
 			      'type':"Request",
 			      'data':JSON.parse(this.getData()),
@@ -65,9 +63,7 @@ class RequestDataExtension extends DataMsj{
 			return JSON.stringify(objrequest);
 
 		} catch(e) {
-			
-			console.log("Error al convertir objeto a json");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -85,8 +81,7 @@ class RequestDataExtension extends DataMsj{
 				}
 				return false;
 		} catch (error) {
-			console.error("Error al realizar ActionDefault Extension: ",error);
-			return false;
+			throw new Error(error);
 		}
 	}
 
@@ -96,13 +91,13 @@ class RequestDataExtension extends DataMsj{
 			let responseExt=new ResponseDataExtension(JSON.stringify(msg));
 			responseExt.setSourcePeer(username);
 			responseExt.setDestinyPeer(remoteData.source);
+			//Le respondemos al servicio especifico de lo contrario se queda en el middleware
 			responseExt.setExtensionName(remoteData.extensioname);
 			responseExt.setExtensionId(remoteData.id);
 			return responseExt;
 
 		} catch(e) {
-			console.log("Error al realizar response desde Request: ");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -119,6 +114,11 @@ class RequestDataExtension extends DataMsj{
 
 						case "services":
 							
+							//extensioname:remoteData.extensioname,
+							//extensionId:remoteData.extensionId
+							//Permite enviar los servicios del peer
+							//No requiere que se acepte por parte de middleware
+							//Le llega de forma automatica como un respuesta al servicio que lo solicito
 							let servicios={
 								services:peer.getExtensions(),
 								source:peer.getUsername(),
@@ -152,17 +152,30 @@ class RequestDataExtension extends DataMsj{
 					this.setSourcePeer(remoteData.source);
 					this.setDestinyPeer(remoteData.destiny);
 					this.setExtensionName(remoteData.extensioname);
+					//this.setExtensionId(remoteData.id);
+					//Path for all browser
 					let puertoId=peer.getPortIdOfExtension(remoteData.extensioname);
-					this.setExtensionId(puertoId);
-					this.do(peer.getPortExternals()[puertoId]);
+					if (puertoId){
+						this.setExtensionId(puertoId);
+						this.do(peer.getPortExternals()[puertoId]);
+					}
+					/*
+					Fix mejora para ahorrar pasos para la proxima
+					console.log(puertoId);
+					if (puertoId){
+						console.log("realizar forward");
+						//forwardExtensionPeer(this)
+						//
+					}
+					*/
+					
 					
 				}
 				return true;
 			}
 			return false;
 		}catch(error){
-			console.error("Error al realizar actionAutomatic Extension: ",error);
-			return false
+			throw new Error(error);
 		}
 	}
 
@@ -173,7 +186,7 @@ class RequestDataExtension extends DataMsj{
 			this.actionAutomatic(remoteData,peer);
 
 		} catch (error) {
-			console.error("Error al realizar:"+this.getName()+": ",error);
+			throw new Error(error);
 		}
 	}
 
@@ -184,8 +197,7 @@ class RequestDataExtension extends DataMsj{
 			this.getState().do(this,portcs);
 
 		} catch(e) {
-			console.log("Error al realizar action sobre un response");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }

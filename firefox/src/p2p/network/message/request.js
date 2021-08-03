@@ -5,13 +5,13 @@ class RequestData extends DataMsj{
 			super(obj);
 			this.mode="";
 			this.name="Request";
+			//Esto facilita que un mensaje en modo testing pueda funcionar de forma transparente.
 			let obj_tmp=JSON.parse(obj);
 			if (obj_tmp && obj_tmp.mode!==undefined){
 				this.setMode(obj_tmp.mode);
 			};
 		} catch(e) {
-			console.log("Error al crear request data.");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -23,6 +23,21 @@ class RequestData extends DataMsj{
 			super.actionDefault(remoteData,peer);
 
 			this.changeState(new onAccept());
+
+			/*
+			{"type":"Request","data":"{
+				\"type\":\"checkpeer\",
+				\"data\":{
+					\"id\":\"1598411666013\",
+					\"username\":\"b4n04b\",
+					\"online\":true,
+					\"p2p\":true,
+					\"ip\":\"\",
+					\"spec\":{\"language\":\"en-US\",\"platform\":\"Linux x86_64\",\"oscpu\":\"Linux x86_64\",\"plugins\":{},\"geo\":{}},
+					\"mode\":\"hybrid\"
+					}}",
+					"mode":""}
+			*/
 
 			let controlPeer = JSON.parse(remoteData.data);
 
@@ -36,8 +51,7 @@ class RequestData extends DataMsj{
 			}
 
 		} catch(e) {
-			console.log("Error al usar actionDefault Request.");
-			console.error(e);
+			throw new Error(e);
 		}
 	}
 
@@ -46,8 +60,7 @@ class RequestData extends DataMsj{
 			//Esto podria variar se dejo a fin de posible cambio
 			this.getState().do(this,portcs);
 		} catch(e) {
-			console.log("Error al realizar action sobre un response");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }

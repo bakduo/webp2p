@@ -3,10 +3,10 @@ class ResponseData extends DataMsj{
 	constructor(obj){
 		try {
 			super(obj);
+			//this.packetData={};
 			this.mode="";
 		} catch(e) {
-			console.log("Error al crear response data.");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -14,10 +14,8 @@ class ResponseData extends DataMsj{
 		try {
 			//Esto podria variar se dejo a fin de posible cambio
 			this.getState().do(this,portcs);
-
 		} catch(e) {
-			console.log("Error al realizar action sobre un response");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }
@@ -31,8 +29,7 @@ class ServiceData extends DataMsj{
 			this.name="Service";
 
 		} catch(e) {
-			console.log("Error al crear response data.");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -46,8 +43,7 @@ class ServiceData extends DataMsj{
 			return JSON.stringify(obj);
 
 		} catch(e){
-			console.log("Error al convertir objeto a json desde: "+this.getName());
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -58,6 +54,7 @@ class ServiceData extends DataMsj{
 			this.setDataQueue(false);
 			super.actionDefault(remoteData,peer);
 			this.changeState(new onAccept());
+			//console.log(remoteData);
 			let obj=JSON.parse(this.getData());
 			
 			browser.notifications.create({
@@ -70,8 +67,7 @@ class ServiceData extends DataMsj{
 			peer.addServiceOfPeer(remoteData.peersource,obj);
 		
 		}catch(e){
-			console.log("Error al realizar actionDefault");
-			console.error(e);
+			throw new Error(e);
 		}
 	}	
 }

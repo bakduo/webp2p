@@ -3,6 +3,11 @@
 var backgroundPage = browser.extension.getBackgroundPage();
 var peerobj = backgroundPage.myPeer;
 
+function UserException(message) {
+  this.message = message;
+  this.name = 'UserException';
+}
+
 function saveOptions(e){
   
   try {
@@ -27,67 +32,73 @@ function saveOptions(e){
     }else if (mode_alone && !mode_client && !mode_server && !mode_manager){
         mode_str="alone";
     }
-
+    
     peerobj.setEnabled(true);
+    
     peerobj.setUrlSignalServer(server_signal);
+    
     localStorage.setItem('mode', mode_str);
+    
     peerobj.setMode(mode_str);
 
-
   } catch (error) {
-    console.log("Error al saveOptions");
+    throw new UserException('Error al saveOptions');
   }
 
-  
 }
 
 function restoreOptions(e){
   try {
     
     let storageItem = localStorage.getItem('mode');
-    switch (storageItem){
-      case "hybrid":
-        document.getElementById("check_server").checked=true;
-        document.getElementById("check_client").checked=true;
-        document.getElementById("check_manager").checked=false;
-        document.getElementById("check_alone").checked=false;
-        peerobj.setMode("hybrid");
+    if (storageItem){
+      switch (storageItem){
+        case "hybrid":
+          document.getElementById("check_server").checked=true;
+          document.getElementById("check_client").checked=true;
+          document.getElementById("check_manager").checked=false;
+          document.getElementById("check_alone").checked=false;
+          peerobj.setMode("hybrid");
+          break;
+        case "server":
+          document.getElementById("check_server").checked=true;
+          document.getElementById("check_client").checked=false;
+          document.getElementById("check_manager").checked=false;
+          document.getElementById("check_alone").checked=false;
+          peerobj.setMode("server");
         break;
-      case "server":
-        document.getElementById("check_server").checked=true;
-        document.getElementById("check_client").checked=false;
-        document.getElementById("check_manager").checked=false;
-        document.getElementById("check_alone").checked=false;
-        peerobj.setMode("server");
-      break;
-      case "client":
-        document.getElementById("check_server").checked=false;
-        document.getElementById("check_client").checked=true;
-        document.getElementById("check_manager").checked=false;
-        document.getElementById("check_alone").checked=false;
-        peerobj.setMode("client");
-      break;
-      case "manager":
-        document.getElementById("check_server").checked=false;
-        document.getElementById("check_client").checked=false;
-        document.getElementById("check_manager").checked=true;
-        document.getElementById("check_alone").checked=false;
-        peerobj.setMode("manager");
-      break;
-      case "alone":
-        document.getElementById("check_server").checked=false;
-        document.getElementById("check_client").checked=false;
-        document.getElementById("check_manager").checked=false;
-        document.getElementById("check_alone").checked=true;
-        peerobj.setMode("alone");
-      break;
-    };
-
-    document.getElementById("signal_server").value = peerobj.getUrlSignalServer();
+        case "client":
+          document.getElementById("check_server").checked=false;
+          document.getElementById("check_client").checked=true;
+          document.getElementById("check_manager").checked=false;
+          document.getElementById("check_alone").checked=false;
+          peerobj.setMode("client");
+        break;
+        case "manager":
+          document.getElementById("check_server").checked=false;
+          document.getElementById("check_client").checked=false;
+          document.getElementById("check_manager").checked=true;
+          document.getElementById("check_alone").checked=false;
+          peerobj.setMode("manager");
+        break;
+        case "alone":
+          document.getElementById("check_server").checked=false;
+          document.getElementById("check_client").checked=false;
+          document.getElementById("check_manager").checked=false;
+          document.getElementById("check_alone").checked=true;
+          peerobj.setMode("alone");
+        break;
+      };
+  
+      document.getElementById("signal_server").value = peerobj.getUrlSignalServer();
+    }else{
+      alert("No existe valor para el modo.");
+    }
     
+    //e.preventDefault();
+
   } catch(e) {
-    console.log("Error al ejecutar storage item desde localStorage.");
-    console.log(e);
+    throw new UserException('Error al ejecutar storage item desde localStorage.');
   }
 }
 

@@ -3,14 +3,14 @@ class ResponseDataExtension extends DataMsj{
 	constructor(obj){
 		try {
 			super(obj);
+			//this.responseData={};
 			this.name="ResponseDataExtension";
 			this.source="";
 			this.destiny="";
 			this.extensioname="";
 			this.extensionId=null;
 		} catch(e) {
-			console.log("Error al crear response data extension.");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -51,8 +51,6 @@ class ResponseDataExtension extends DataMsj{
 			
 			//Esto podria variar en un futuro
 
-			let obj=JSON.parse(this.getData());
-
 			let objresponse={
 			      'type':"Response",
 			      'data':JSON.parse(this.getData()),
@@ -65,9 +63,7 @@ class ResponseDataExtension extends DataMsj{
 			return JSON.stringify(objresponse);
 
 		} catch(e) {
-			
-			console.log("Error al convertir objeto a json");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -85,12 +81,20 @@ class ResponseDataExtension extends DataMsj{
 			}
 			return false;
 		}catch(error){
-			console.log("Error actionForward desde Extension Response: ",error);
-			return false;
+			throw new Error(error);
 		}
 	}
 
 	queryService(){
+		/*
+		let requestExt = new RequestDataExtension(JSON.stringify(objson));
+				requestExt.changeState(new onAccept());
+				requestExt.setSourcePeer(objson.source);
+				requestExt.setDestinyPeer(objson.destiny);
+				requestExt.setExtensionName(objson.extensioname);
+				requestExt.setExtensionId(objson.id);
+				requestExt.do(portFromComando);
+		*/
 		return false;
 	}
 
@@ -101,14 +105,17 @@ class ResponseDataExtension extends DataMsj{
 				this.setSourcePeer(remoteData.source);
 				this.setDestinyPeer(remoteData.destiny);
 				this.setExtensionName(remoteData.extensioname);
+				//Path for all browser
 				let puertoId=peer.getPortIdOfExtension(remoteData.extensioname);
-				this.setExtensionId(puertoId);
-				this.do(peer.getPortExternals()[puertoId]);
+				if (puertoId){
+					this.setExtensionId(puertoId);
+					this.do(peer.getPortExternals()[puertoId]);
+				}
+				
 
 			}
 		}catch(error){
-			console.log("Error actionAutomatic desde Extension Response: ",error);
-			return false;
+			throw new Error(error);
 		}
 	}
 
@@ -119,8 +126,7 @@ class ResponseDataExtension extends DataMsj{
 				this.actionAutomatic(remoteData,peer);
 
 			} catch (error) {
-				console.error("Error al realizar actionResponse desde "+this.getName()+": ",error);
-				return false;
+				throw new Error(error);
 			}
 	}
 
@@ -129,8 +135,7 @@ class ResponseDataExtension extends DataMsj{
 			//Esto podria variar se dejo a fin de posible cambio
 			this.getState().do(this,portcs);
 		} catch(e) {
-			console.log("Error al realizar action sobre un response");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }

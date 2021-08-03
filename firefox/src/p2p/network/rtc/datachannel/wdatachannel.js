@@ -1,8 +1,8 @@
 class WRTCDataChannel {
 
 	constructor(){
-		this.datachannel=null;
-		this.channelState=null;
+		this.datachannel=false;
+		this.channelState=false;
 	}
 
 	setDataChannel(ch){
@@ -22,8 +22,7 @@ class WRTCDataChannel {
 			}
 
 		} catch(e) {
-			console.error("Error sobre evento de cierre del canal.");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -31,8 +30,7 @@ class WRTCDataChannel {
 		try {
 			this.datachannel.close();
 		} catch(e) {
-			console.log("Error al realizar close() en WRTCDataChannel ");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -47,8 +45,7 @@ class WRTCDataChannel {
 			}
 
 		} catch(e) {
-			console.log("Error al realizar onopen sobre datachannel");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -61,8 +58,7 @@ class WRTCDataChannel {
 			}
 
 		} catch(e) {
-			console.log("Error al realizar onopen sobre datachannel");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -71,9 +67,11 @@ class WRTCDataChannel {
 	
 			for (let i in myPeer.getChannelPeers()){
 				if (myPeer.getChannelPeers().hasOwnProperty(i)){
+					//console.log('Key is: ' + i + '. Value is: ' + channelPeers[i]);
 					if (myPeer.getChannelPeers()[i]) {
 					  
 						if (myPeer.getChannelPeers()[i].getState()){
+							//console.log("ESTADO CANAL: ",myPeer.getChannelPeers()[i].getState().getName());
 							await myPeer.getChannelPeers()[i].getState().handleDo(myPeer);
 						}else{
 							console.log("SIN ESTADO PARA CANAL: ",i);
@@ -83,8 +81,7 @@ class WRTCDataChannel {
 		  	}
 		
 		} catch(e) {
-			console.log("Error al realizar onopen sobre datachannel");
-			console.log(e);
+			throw new Error(e);
 		}	
 	}
 
@@ -92,16 +89,17 @@ class WRTCDataChannel {
 		try {
 			this.datachannel.send(data);
 		} catch(e) {
-			console.log("Error al realizar send en WRTCDataChannel");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
 	getState(){
 		try {
+			//Patch, Factory, para habilitar trabajar con un objeto de estado que permita comportamiento, en lugar de tratar con una variable de 
+			//estado, mismo caso de ICE y Connection.
 			console.log("Receive channel's status has changed to " + this.getReadyState());
 
-			if (this.channelState!==null){
+			if (this.channelState){
 				if (this.channelState.getName()===this.getReadyState()){
 					return this.channelState;
 				}
@@ -115,23 +113,21 @@ class WRTCDataChannel {
 				}
 			}
 			console.log("Canal aun no establecido");
-			return null;
+			return false;
 			
 		} catch(e) {
-			console.log("Error al realizar cambio de estado desde DataChannel");
-			console.error(e);
+			throw new Error(e);
 		}
 	}
 
 	getReadyState(){
 		try {
-			if (this.datachannel!==null){
+			if (this.datachannel){
 				return this.datachannel.readyState;
 			}
-			return null;
+			return false;
 		} catch(e) {
-			console.log("Error al relizar readyState en WRTCDataChannel");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 

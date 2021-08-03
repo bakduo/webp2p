@@ -12,8 +12,10 @@ class PPeerConnectionState{
 		return this.name;
 	}
 
-	handleDo(username,data,p2p){
-	   console.log("action for state");	
+	//handleDo(username,data,p2p){
+	handleDo(...args){
+	   
+	   throw new Error("Implementar en la subclass")	
 	}
 }
 
@@ -23,13 +25,13 @@ class PPeerConnectedState extends PPeerConnectionState {
 		this.name='connected';
 	}
 
-	handleDo(username,data,p2p){
+	//handleDo(username,data,p2p){
+		handleDo(...args){
 		try {
-			console.log("Conectado a :"+username);
+			console.log("Conectado a :"+args[0]);
 
 		} catch(e) {
-			console.log("Error al realizar PPeerConnectedState: ");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }
@@ -40,12 +42,11 @@ class PPeerNewState extends PPeerConnectionState {
 		this.name='new';
 	}
 
-	handleDo(username,data,p2p){
+	handleDo(...args){
 		try {
 			console.log("nueva conexión en progreso");
 		} catch(e) {
-			console.log("Error al realizar PPeerNewState: ");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }
@@ -57,21 +58,21 @@ class PPeerDisconnectedState extends PPeerConnectionState {
 		this.name='disconnected';
 	}
 
-	handleDo(username,data,p2p){
+	handleDo(...args){
 		try {
 
+			//username,data,p2p
 			console.log("RTC peer desconectado");
-			p2p.getPeersOnline().setModeSearch(new searchPolicyUser());
-			let user = p2p.getPeersOnline().searchPeer(username);
-			if (user!==null){
-				p2p.getPeersDeleted().push(user);
-				p2p.checkDelete();
+			args[2].getPeersOnline().setModeSearch(new searchPolicyUser());
+			let user = args[2].getPeersOnline().searchPeer(args[0]);
+			if (user){
+				args[2].getPeersDeleted().push(user);
+				args[2].checkDelete();
 			}
 			
 			
 		} catch(e) {
-			console.log("Error al realizar PPeerDisconnectedState: ");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }
@@ -82,12 +83,12 @@ class PPeerFailedState extends PPeerConnectionState{
 		this.name='failed';
 	}
 
-	handleDo(username,data,p2p){
+	//handleDo(username,data,p2p){
+	handleDo(...args){
 		try {
 		    console.log("falla de conexión con el peer onconnectionstatechange");
 		} catch(e) {
-			console.log("Error al realizar PPeerFailedState: ");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }
@@ -98,14 +99,13 @@ class PPeerClosedState extends PPeerConnectionState{
 		this.name='closed';
 	}
 
-	handleDo(username,data,p2p){
+	handleDo(...args){
 		try {
 			
 			console.log("conexion cerrada connectionstate change");
 
 		} catch(e) {
-			console.log("Error al realizar PPeerClosedState: ");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }
@@ -114,8 +114,9 @@ class PPeerClosedState extends PPeerConnectionState{
 class ManagerFactoryPeerConnectionState {
 	
 	constructor(){
+		//'failed','disconnected','closed','checking','new','connected'
 		this.list=[];
-		this.factory=null;
+		this.factory={};
 	}
 
 	addState(s){
@@ -146,8 +147,7 @@ class ManagerFactoryPeerConnectionState {
 				return this.factory;
 
 		}catch(e) {
-			console.log("Error al realizar getState");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }

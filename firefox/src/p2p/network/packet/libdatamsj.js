@@ -8,8 +8,8 @@ class MsjState{
 		return this.status;
 	}
 
-	do(){
-		console.log("Sin estado");
+	do(...args){
+		throw new Error("Implementar funcionalidad");
 	}
 
 }
@@ -20,14 +20,14 @@ class onAccept extends MsjState{
 		this.status="Accept";
 	}
 
-	do(objmsj,puertocs){
+	//do(objmsj,puertocs){
+	do(...args){	
 		try {
-			let dataremote1=JSON.parse(objmsj.getData());
-			let action = new ActionCode(dataremote1,puertocs);
+			let dataremote1=JSON.parse(args[0].getData());
+			let action = new ActionCode(dataremote1,args[1]);
 			action.do();
 		} catch(e) {
-			console.log("Error al realizar estado Accept");
-			console.log(e);
+			throw new Error(e);
 		}
 		
 
@@ -41,7 +41,7 @@ class onDeny extends MsjState{
 		this.status="Deny";
 	}
 
-	do(){
+	do(...args){
 		console.log(this.status);
 	}
 
@@ -49,8 +49,7 @@ class onDeny extends MsjState{
 		try {
 			objData.do(portCS,this.status);
 		} catch(e) {
-			console.log("Error al realizar accion sobre estado");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }
@@ -61,7 +60,7 @@ class onReady extends MsjState{
 		this.status="Ready";
 	}
 
-	do(){
+	do(...args){
 		console.log(this.status);
 	}
 
@@ -69,8 +68,7 @@ class onReady extends MsjState{
 		try {
 			objData.do(portCS,this.status);
 		} catch(e) {
-			console.log("Error al realizar accion sobre estado");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }
@@ -81,7 +79,7 @@ class onQueue extends MsjState{
 		this.status="Queue";
 	}
 
-	do(){
+	do(...args){
 		console.log(this.status);
 	}
 
@@ -89,8 +87,7 @@ class onQueue extends MsjState{
 		try {
 			objData.do(portCS,this.status);
 		} catch(e) {
-			console.log("Error al realizar accion sobre estado");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }
@@ -174,9 +171,7 @@ class DataMsj{
 			return JSON.stringify(objrequest);
 
 		} catch(e) {
-			
-			console.log("Error al convertir objeto a json desde: "+this.getName());
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -205,7 +200,7 @@ class DataMsj{
 			}
 
 		}catch (error){
-			console.error("Error al inicair RequestDChannel: ",error);
+			throw new Error(e);
 		}
 	}
 
@@ -223,9 +218,7 @@ class DataMsj{
 				return false;
 
 		} catch (error) {
-			console.log("actionAutomatic : es un package con error  "+this.getName());
-			console.error("Error al realizar Actionautomatic: ",error);
-			return false;
+			throw new Error(e);
 		}
 	}
 
@@ -233,15 +226,21 @@ class DataMsj{
 		try {
 				if (peer.getMode()=="hybrid"|| peer.getMode()=="server"){
 						this.changeState(new onQueue());
+						/*
+						this.setSourcePeer(remoteData.source);
+						this.setDestinyPeer(remoteData.destiny);
+						this.setExtensionName(remoteData.extensioname);
+						this.setExtensionId(remoteData.id);
+						peer.addDataExtension(this);
+						peer.addMessageExtension(remoteData.extensioname,JSON.stringify(remoteData));
+						*/
 						return true;
 				}else{
 					console.log(" No es un modo para el packet valido en una instancia de "+this.getName()+" extension.");
 				}
 				return false;
 		} catch (error) {
-			console.log("Error al procesar action forward: "+this.getName()+" extension.");
-			console.error(error);
-			return false;
+			throw new Error(e);
 		}
 	}
 
@@ -254,8 +253,7 @@ class DataMsj{
 					console.log(" No es un modo para el packet valido en una instancia de "+this.getName()+" extension.");
 				}
 		} catch(e) {
-			console.log("Error al realizar forwardService");
-			console.error(e);
+			throw new Error(e);
 		}
 	}
 }

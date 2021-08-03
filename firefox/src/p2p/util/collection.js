@@ -18,15 +18,18 @@ class searchPolicyUser extends searchPolicy {
 	
 	search(username){
 	
-		let tmp=null;
-		for (let index = 0; index < this.collection.length; index++) {
-			if (this.collection[index].getUsername()==username){
-				tmp=this.collection[index];
-				break;
-			}
-			
-		}
-		return tmp;
+		// let tmp=null;
+		// for (let index = 0; index < this.collection.length; index++) {
+		// 	if (this.collection[index].getUsername()==username){
+		// 		tmp=this.collection[index];
+		// 		break;
+		// 	}
+		// }
+		// return tmp;
+
+		const policy = this.collection.find((item)=>{return (item.getUsername()===String(username))});
+
+		return policy;
 	}
 }
 
@@ -37,15 +40,18 @@ class searchPolicyId extends searchPolicy {
 	
 	search(id){
 
-		let tmp=null;
-		for (let index = 0; index < this.collection.length; index++) {
-			if (this.collection[index].getId()===id){
-				tmp=this.collection[index];
-				break;
-			}
-			
-		}
-		return tmp;
+		// let tmp=null;
+		// for (let index = 0; index < this.collection.length; index++) {
+		// 	if (this.collection[index].getId()===id){
+		// 		tmp=this.collection[index];
+		// 		break;
+		// 	}
+		// }
+		// return tmp;
+		const policy = this.collection.find((item)=>{return (item.getId()===String(id))});
+
+		return policy;
+		
 	}
 }
 
@@ -65,7 +71,23 @@ class CollectionPeers {
 	}
 
 	deletePeer(peer){
+		/*
+		//revisar
+		let tmp = [];
+		for (let i = 0; i < this.collection.length; i++) {
+			if (this.collection[i].getUsername()!==peer.getUsername()){
+				tmp.push(this.collection[i]);
+			}
+		}
+		if (tmp.length===0){
+			return this.collection;
+		}
+		return tmp
+		*/
+		//console.log(this.collection);
 		this.collection = this.collection.filter((item)=>item.getUsername()!==peer.getUsername());
+		//console.log("Despues");
+		//console.log(this.collection);
 		return this.collection;
 	}
 

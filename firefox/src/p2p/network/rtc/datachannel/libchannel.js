@@ -16,7 +16,8 @@ class PChannelState{
 
 	}
 
-	operChannel(p2p,msg,id){
+	//operChannel(p2p,msg,id){
+	operChannel(...args){
 
 	}
 
@@ -34,17 +35,16 @@ class PChannelClosedState extends PChannelState{
 			console.log("Canal cerrado para: ");
 			//alert("Canal Cerrado.");
 		} catch(e) {
-			console.log("Error al realizar PChannelClosedState: ");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
-	operChannel(p2p,msg,id){
+	//operChannel(p2p,msg,id){
+	operChannel(...args){
 		try {
 			console.log("Error! Attempt to send while connection closed.");
 		} catch(e) {
-			console.log("Error al realizar closed sobre el DataChannel.");
-			console.error(e);
+			throw new Error(e);
 		}
 	}
 
@@ -61,18 +61,18 @@ class PChannelClosingState extends PChannelState{
 			console.log("Cerrando canal... ");
 			//alert("Cerrando canal.");
 		} catch(e) {
-			console.log("Error al realizar PChannelClosingState: ");
-			console.log(e);
+		throw new Error(e);
 		}
 	}
 
-	operChannel(p2p,msg,id){
+	//operChannel(p2p,msg,id){
+	operChannel(...args){
 		try {
 			// statements
-			console.log("Attempted to send message while closing: ", p2p.getUsername());
+			console.log("Attempted to send message while closing: ", args[0].getUsername());
 		} catch(e) {
-			console.log("Error al realizar clossing sobre DataChannel.");
-			console.error(e);
+			
+			throw new Error(e);
 		}
 	}
 }
@@ -88,19 +88,19 @@ class PChannelOpenState extends PChannelState{
 		try {
 			console.log("Canal abierto: ",p2p.getUsername());
 		} catch(e) {
-			console.log("Error al realizar PChannelOpenState: ");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
-	operChannel(p2p,msg,id){
+	//operChannel(p2p,msg,id){
+	operChannel(...args){
 		try {
 			//porque es async
 				//console.log("Enviando mensaje al peer remoto.");
 				//hay mensajes encolados?
 
 				//if (p2p.msjQueue.length>0){
-				if (p2p.getMsjQueue().length>0){
+				if (args[0].getMsjQueue().length>0){
 					console.log("QUEUE MSG SIN FUNCIONAR");
 					/*
 						p2p.getMsjQueue().forEach((msg) => {
@@ -123,14 +123,13 @@ class PChannelOpenState extends PChannelState{
 					*/
 				}
 				
-				if (p2p.getChannelPeers()[id]){
-					p2p.getChannelPeers()[id].send(msg);	
+				if (args[0].getChannelPeers()[id]){
+					args[0].getChannelPeers()[id].send(msg);	
 				}
 				//p2p.channelPeers[id].send(msg);
 
 		} catch(e) {
-			console.log("Error al utilizar open sobre datachannel.");
-			console.error(e);
+			throw new Error(e);
 		}
 	}
 }
@@ -145,25 +144,24 @@ class PChannelConnectingState extends PChannelState{
 		try {
 		   console.log("Canal conectando....para: ");
 		} catch(e) {
-			console.log("Error al realizar PChannelConnectingState: ");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
-	operChannel(p2p,msg,id){
+	//operChannel(p2p,msg,id){
+	operChannel(...args){
 		try {
 				//console.log("Connection not open; queueing: " + msg);
 			 	if (msg){
 					let queuemsj={
-						peer_username:id,
-						data:msg
+						peer_username:args[2],
+						data:args[1]
 					};
 					//p2p.msjQueue.push(queuemsj);
-					p2p.getMsjQueue().push(queuemsj);
+					args[0].getMsjQueue().push(queuemsj);
 				}
 			} catch(e) {
-				console.log("Error al realizar operchannel desde connecteing datachannel");
-				console.error(e);
+				throw new Error(e);
 			}	
 	}
 
@@ -173,7 +171,7 @@ class ManagerFactoryHandleChannelState {
 	
 	constructor(){
 		//'failed','disconnected','closed','checking','new','connected'
-		this.factory=null;
+		this.factory={};
 		/*
 		this.factory.push(new PChannelClosingState());
 		this.factory.push(new PChannelConnectingState());
@@ -185,19 +183,21 @@ class ManagerFactoryHandleChannelState {
 	getHandleChannelState(name){
 		try {
 	
-		  let obj=null;
-	
-		  for (let i=0;i<this.factory.length;i++){
-			if (this.factory[i].getName()==String(name)){
-			  obj = this.factory[i];
-			  break;
-			}
-		  }
-	
-		  return obj;
+		//   let obj=null;
+		//   for (let i=0;i<this.factory.length;i++){
+		// 	if (this.factory[i].getName()==String(name)){
+		// 	  obj = this.factory[i];
+		// 	  break;
+		// 	}
+		//   }	
+		//   return obj;
+
+		  const channel = this.factory.find((item)=>{return (item.getName()===String(name))});
+
+		  return channel;
 	
 		} catch (error) {
-		  console.error("Error al buscar comando desde menu: ",error);
+			throw new Error(error);
 		}
 	}
 
@@ -219,8 +219,7 @@ class ManagerFactoryHandleChannelState {
 				}
 				return this.factory;
 		}catch(e) {
-			console.log("Error al realizar getState Channel");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }

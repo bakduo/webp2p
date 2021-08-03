@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded",function (){
         
     } catch (error) {
         
-        console.log(error);
+        throw new Error(error);
     }
    
 });

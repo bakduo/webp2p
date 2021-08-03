@@ -1,17 +1,11 @@
 Dev WebExtension P2P
 ==================
 
-## Folder mdp2p-firefox
+## Folder firefox
   - WebExtension for Firefox
-## Folder mdp2p-chrome
-  - WebExtension for Chrome
-
-## Examples folder with HelloWorld compatibility with:
- - Firefox.
- - Chrome.
 
 ## NEW content Firefox addons
-- support Angular panel control
+- support vanilla Javascript/React/Angular
 
 ![Menu panelcontrol](images/firefox/menu-nuevo.png)
 

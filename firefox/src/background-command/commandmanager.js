@@ -8,8 +8,11 @@ class CommandMessage{
 		return this.name;
 	}
 
-	execute(obj1=null,obj2=null,obj3=null,callback){
-		console.log("Implementar");
+	//execute(obj1=null,obj2=null,obj3=null,callback){
+	execute(...args){
+
+		throw new Error("Se debe impplementar en la clase concreta");
+		
 	}
 
 }
@@ -25,25 +28,27 @@ class CommandManager extends CommandMessage{
 		this.commands.push(c);
 	}
 
-	execute(obj1=null,obj2=null,obj3=null,callback){
+	execute(...args){
 		console.log("Implementar");
 	}	
 
 	getCommand(receptorType){
 		try {
 
-			let obj=null;
-			for (let i=0;i<this.commands.length;i++){
-				if (this.commands[i].getName()==String(receptorType)){
-					obj = this.commands[i];
-					break;
-				}
-			}
+			// let obj=null;
+			// for (let i=0;i<this.commands.length;i++){
+			// 	if (this.commands[i].getName()==String(receptorType)){
+			// 		obj = this.commands[i];
+			// 		break;
+			// 	}
+			// }
+			const command = this.commands.find((item)=>{return (item.getName()===String(receptorType))})
 
-			return obj;
+			return command;
 
 		} catch (error) {
-			console.error("Error al buscar comando: ",error);
+			//console.error("Error al buscar comando: ",error);
+			throw new Error(error);
 		}
 		
 	}
@@ -56,10 +61,11 @@ class CommandActionAdd extends CommandMessage{
 		super(name)
 	}
 
-	execute(objson,myPeer,obj3=null,callback){
+	//execute(objson,myPeer,obj3=null,callback){
+	execute(...args){
 		try {
 
-			myPeer.addActions(objson.action);
+			args[1].addActions(args[0].action);
 
 		} catch (error) {
 			console.error("Error al ejecutar command ActionAdd.");	
@@ -73,11 +79,11 @@ class CommandAddExtension extends CommandMessage{
 		super(name)
 	}
 
-	execute(objson,myPeer,puerto=null,callback){
+	//execute(objson,myPeer,puerto=null,callback){
+	execute(...args){
 		try {
-
 			//console.log(objson);
-			myPeer.addExtension(objson);
+			args[1].addExtension(args[0]);
 
 		} catch (error) {
 			console.error("Erro al ejecutar command AddExtension");	
@@ -92,7 +98,8 @@ class CommandSendDataToPeer extends CommandMessage{
 		super(name)
 	}
 
-	execute(objson,myPeer,obj3=null,callback){
+	//execute(objson,myPeer,obj3=null,callback){
+	execute(...args){
 		try {
           
           let obj_data_service = {
@@ -101,11 +108,11 @@ class CommandSendDataToPeer extends CommandMessage{
             data: objson.data
           }
           //envia la modificacion al peer remoto
-          let channel = myPeer.getChannelPeers()
-		  channel[objson.peer_remoto].send(JSON.stringify(obj_data_service));
+          let channel = args[1].getChannelPeers()
+		  channel[args[0].peer_remoto].send(JSON.stringify(obj_data_service));
 		  
 		} catch (error) {
-			console.error("Error al ejecutar command senddatapeer");
+			throw new Error(error);
 		}
 	}
 }
@@ -116,26 +123,26 @@ class CommandRequest extends CommandMessage{
 		super(name)
 	}
 
-	execute(objson,myPeer,portFromComando,callback){
+	//execute(objson,myPeer,portFromComando,callback){
+	execute(...args){
 		try {
 
-			
-            if (myPeer.searchExtension(objson.extensioname)!==null){
+            if (args[1].searchExtension(args[0].extensioname)){
 			  
-			  objson['source']=myPeer.getUsername();
+			  args[0]['source']=args[1].getUsername();
 
-              if (myPeer.getMode()==="alone"){
+              if (args[1].getMode()==="alone"){
                 //el origen ahora simulado es el destino
-                let requestExt = new RequestDataExtension(JSON.stringify(objson));
+                let requestExt = new RequestDataExtension(JSON.stringify(args[0]));
 				requestExt.changeState(new onAccept());
-				requestExt.setSourcePeer(objson.source);
-				requestExt.setDestinyPeer(objson.destiny);
-				requestExt.setExtensionName(objson.extensioname);
-				requestExt.setExtensionId(objson.id);
-				requestExt.do(portFromComando);
+				requestExt.setSourcePeer(args[0].source);
+				requestExt.setDestinyPeer(args[0].destiny);
+				requestExt.setExtensionName(args[0].extensioname);
+				requestExt.setExtensionId(args[0].id);
+				requestExt.do(args[2]);
               }else{
-                if (myPeer.getMode()==="hybrid" || myPeer.getMode()==="client"){
-                  callback(objson.destiny,JSON.stringify(objson));
+                if (args[1].getMode()==="hybrid" || args[1].getMode()==="client"){
+					args[3](objson.destiny,JSON.stringify(args[0]));
                 }else{
                   console.log("No existe la modalidad de request de uso en este modo de Peer.");
                 }
@@ -146,7 +153,7 @@ class CommandRequest extends CommandMessage{
             }
 		  
 		} catch (error) {
-			console.error("Error al ejecutar command request");
+			throw new Error(error);
 		}
 	}
 }
@@ -157,22 +164,23 @@ class CommandResponse extends CommandMessage{
 		super(name)
 	}
 
-	execute(objson,myPeer,portFromComando,callback){
+	//execute(objson,myPeer,portFromComando,callback){
+	execute(...args){
 		try {
 			
-            if (myPeer.searchExtension(objson.extensioname)!==null){
-              objson['source']=myPeer.getUsername();
-              if (myPeer.getMode()==="alone"){
-                let responseExt = new ResponseDataExtension(JSON.stringify(objson));
+            if (args[1].searchExtension(args[0].extensioname)){
+			  args[0]['source']=args[1].getUsername();
+              if (args[1].getMode()==="alone"){
+                let responseExt = new ResponseDataExtension(JSON.stringify(args[0]));
 				responseExt.changeState(new onAccept());
-				responseExt.setSourcePeer(objson.source);
-				responseExt.setDestinyPeer(objson.destiny);
-				responseExt.setExtensionName(objson.extensioname);
-				responseExt.setExtensionId(objson.id);
-				responseExt.do(portFromComando);
+				responseExt.setSourcePeer(args[0].source);
+				responseExt.setDestinyPeer(args[0].destiny);
+				responseExt.setExtensionName(args[0].extensioname);
+				responseExt.setExtensionId(args[0].id);
+				responseExt.do(args[2]);
               }else{
-                if (myPeer.getMode()==="hybrid" || myPeer.getMode()==="server"){
-                 callback(objson.destiny,JSON.stringify(objson));
+                if (args[1].getMode()==="hybrid" || args[1].getMode()==="server"){
+					args[3](objson.destiny,JSON.stringify(args[0]));
                 }else{
                   console.log("No hay un modo valido para response en el peer.");
                 }
@@ -181,7 +189,7 @@ class CommandResponse extends CommandMessage{
               console.log("Extension no existe.");
 			}
 		} catch (error) {
-			console.error("Error al ejecutar command response");
+			throw new Error(error);
 		}
 	}
 }
@@ -193,17 +201,18 @@ class CommandgetPeerName extends CommandMessage{
 		super(name)
 	}
 
-	execute(objson,myPeer,portFromComando,callback){
+	//execute(objson,myPeer,portFromComando,callback){
+	execute(...args){
 		try {
 			
 			let objusertmp={
 				'type':'PeerName',
 				'name':myPeer.getUsername(),
 			}
-			portFromComando.postMessage(JSON.stringify(objusertmp));
+			args[2].postMessage(JSON.stringify(objusertmp));
 
 		} catch (error) {
-			console.error("Error al ejecutar PeerName");
+			throw new Error(error);
 		}
 	}
 }
@@ -284,8 +293,7 @@ class CQueryPeers extends CQuery{
 			portFromComando.postMessage(JSON.stringify(jsonObj));
 
 		} catch(e) {
-			console.log("Falla el envio de CQueryRequest: "+this.getName());
-			console.error(e);
+			throw new Error(e);
 		}
 	}
 }
@@ -361,20 +369,29 @@ class CommandgetQueryExtension extends CommandMessage{
 		}
 	}
 
-	execute(objson,myPeer,portFromComando,callback){
+	//execute(objson,myPeer,portFromComando,callback){
+	execute(...args){
 		try {
 
-			if (myPeer.searchExtension(objson.extensioname)!==null){
+			/*
+			'type':'queryExtension',
+			'method':jsonQuery.method,
+			'data':data,
+			'extensioname':this.getName(),
+			'extensionId':this.getExtensionId()
+			*/
 
-				let q = this.getQuery(objson.keys.query);
+			if (args[1].searchExtension(args[0].extensioname)){
+
+				let q = this.getQuery(args[0].keys.query);
 				if (q){
-					q.setProtocol(objson);
-					q.sendQuery(portFromComando,myPeer);
+					q.setProtocol(args[0]);
+					q.sendQuery(args[2],args[0]);
 				}
 			}
 			
 		} catch (error) {
-			console.error("Error al ejecutar command queryextension");
+			throw new Error(error);
 		}
 	}
 }
@@ -386,10 +403,11 @@ class CommandgetShowPopup extends CommandMessage{
 		super(name)
 	}
 
-	execute(objson,myPeer,portFromComando,callback){
+	//execute(objson,myPeer,portFromComando,callback){
+	execute(...args){
 		try {
 
-			function onCreated() {
+			function onCreated(){
 				if (browser.runtime.lastError) {
 					console.log(`Error: ${browser.runtime.lastError}`);
 				} else{
@@ -398,17 +416,17 @@ class CommandgetShowPopup extends CommandMessage{
 			}
 
 			function onError(error){
-				console.log(`Error: ${error}`);
+				throw new Error(error);
 			}
 
-			let panel3 = new PanelScript(objson.data.url);
+			let panel3 = new PanelScript(args[0].data.url);
 			panel3.setMode("popup");
 			let panelScriptData3 = panel3.createWindow();
 			let panelWindowScript3 = browser.windows.create(panelScriptData3);
 			panelWindowScript3.then(onCreated, onError);
 
 		} catch (error) {
-			console.error("Error al ejecutar show popup");
+			throw new Error(error);
 		}
 	}
 }

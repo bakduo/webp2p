@@ -40,8 +40,7 @@ class CommandMenuBack {
           );
   
       } catch(e) {
-        console.log("Falla al realizar ListUsers.");
-        console.error(e);
+        throw new Error(e);
       }
     }
   }
@@ -56,8 +55,7 @@ class CommandMenuBack {
       try {
          this.peer.disconnectSignalServer();
       } catch(e) {
-        console.log("Falla al realizar disconnect.");
-        console.error(e);
+        throw new Error(e);
       }
     }
   }
@@ -81,8 +79,7 @@ class CommandMenuBack {
   
         } 
       } catch(e) {
-        console.log("Falla al realizar Login.");
-        console.error(e);
+        throw new Error(e);
       }
     }
   }
@@ -100,8 +97,7 @@ class CommandMenuBack {
         this.peer.conectAllPeers();
   
       } catch(e) {
-        console.log("Falla al realizar conectar modo NAT.");
-        console.error(e);
+        throw new Error(e);
       }
     }
   }
@@ -118,8 +114,7 @@ class CommandMenuBack {
         this.peer.conectAllPeers();
   
       } catch(e) {
-        console.log("Falla al realizar conectar modo NO NAT.");
-        console.error(e);
+        throw new Error(e);
       }
     }
   }
@@ -132,7 +127,6 @@ class CommandMenuBack {
   
     doAction(){
       try {
-       
           this.peer.setUrlSignalServer(this.peer.getUrlSignalServer());
           this.peer.clearClientId();
           this.peer.setPeerEnable(true);
@@ -140,8 +134,7 @@ class CommandMenuBack {
           this.peer.connectSignaServer();
   
       } catch(e) {
-        console.log("Falla al realizar reload connection desde menu.");
-        console.error(e);
+        throw new Error(e);
       }
     }
   }
@@ -164,8 +157,7 @@ class CommandMenuBack {
         }
         
       } catch(e) {
-        console.log("Falla al realizar reload connection desde menu.");
-        console.error(e);
+        throw new Error(e);
       }
     }
   }
@@ -185,8 +177,7 @@ class CommandMenuBack {
         this.peer.disconnectSignalServer("all");
     
       } catch(e) {
-        console.log("Falla al realizar reload connection desde menu.");
-        console.error(e);
+        throw new Error(e);
       }
     }
   }
@@ -207,8 +198,7 @@ class CommandMenuBack {
         panelWindowScript.then(onCreated, onError);
   
       } catch(e) {
-        console.log("Falla al realizar mostrar menu de script.");
-        console.error(e);
+        throw new Error(e);
       }
     }
   }
@@ -229,25 +219,7 @@ class CommandMenuBack {
         panelWindowScript2.then(onCreated, onError);
   
       } catch(e) {
-        console.log("Falla al realizar reload connection desde menu.");
-        console.error(e);
-      }
-    }
-  }
-
-  class CommandAdmin extends CommandMenuBack{
-  
-    constructor(name){
-      super(name);
-    }
-  
-    doAction(){
-      try {
-        let panel2 = new PanelScript("paneladmin/index.html");
-        panel2.show();  
-      } catch(e) {
-        console.log("Falla al realizar reload connection desde menu.");
-        console.error(e);
+        throw new Error(e);
       }
     }
   }
@@ -266,19 +238,20 @@ class CommandMenuBack {
     getCommand(receptorType){
       try {
   
-        let obj=null;
-  
-        for (let i=0;i<this.commands.length;i++){
-          if (this.commands[i].getName()==String(receptorType)){
-            obj = this.commands[i];
-            break;
-          }
-        }
-  
-        return obj;
+        //let obj=null;
+        // for (let i=0;i<this.commands.length;i++){
+        //   if (this.commands[i].getName()==String(receptorType)){
+        //     obj = this.commands[i];
+        //     break;
+        //   }
+        // }
+
+        const command = this.commands.find((item)=>{return (item.getName()===String(receptorType))});
+
+        return command;
   
       } catch (error) {
-        console.error("Error al buscar comando desde menu: ",error);
+        throw new Error(error);
       }
       
     }

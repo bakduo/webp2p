@@ -15,35 +15,44 @@ class ClientConectionWS{
 			this.timerIdReconnect=0;
 
 		} catch(e) {
-			console.log("Error al conectar con servidor de senalizacion");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 
 	conectar(){
 		try {
 			
-			 return new Promise((resolve,reject) => {
+			return new Promise((resolve,reject) => {
 				let conection = new WebSocket(this.server_url);
-				if (conection!==null){
+				if (conection){
 					resolve(conection)
-					return 0;
+					//return 0;
 				}
 				reject("Error al realizar conexion via WebSocket");
-				return -1;
-			 })
+				//return -1;
+			})
 
-		} catch (error) {
-			console.log("Error al realizar conexion via socket");
+		} catch (e) {
+			throw new Error(e);
 		}
 	}
 
+	/*
+	
+	basado en:
+
+	http://www.jstips.co/en/javascript/working-with-websocket-timeout/
+
+	*/
+ 
 	onError(evt){
 		try {
 			console.log("Error sobre la connection socket");
+			console.log(evt.data);
 		} catch(e) {
-			console.log("Error sobre la connection socket");
-			console.log(e);
+			// statements
+			throw new Error(e);
+			
 		}
 	}
 
@@ -52,7 +61,10 @@ class ClientConectionWS{
 	}
 
 	getConnection(){
-		return this.connection;
+		if (this.connection){
+			return this.connection;
+		}
+		return false;
     }
 
     getStateSocket(){
@@ -74,15 +86,15 @@ class ClientConectionWS{
 
 	sendData(message){
 		try {
-			
+		
 			if (this.connection){
+				//this.connection.emit(message.type,JSON.stringify(message));
 				this.connection.send(JSON.stringify(message));
 		    }else{
 		      console.log("No hay coneccion aparente con el servidor");
 		    }
 		  } catch(e) {
-		    console.log("Error en socket WS");
-		    console.log(e);
+		    throw new Error(e);
 		}    
 	}
 
@@ -90,8 +102,11 @@ class ClientConectionWS{
 
 		var timeout = 20000;	
 		try {
+			//Keepalive 
 			let conection_instance=this;
-			if (connection_socket!==null && (typeof connection_socket !== "undefined") && !(typeof connection_socket === "unavailable")){
+			if (connection_socket && (typeof connection_socket !== "undefined") && !(typeof connection_socket === "unavailable")){
+				//si esta OPEN
+				//Mantiene la conexion wan. En teoria no hace falta pero.... hace falta si existe una conexion debil.
 				if (connection_socket.readyState===1){
 					let objkeepalive = {
 							'type': "keepAlive"
@@ -104,8 +119,7 @@ class ClientConectionWS{
 			}
 		
 		}catch(e) {
-		console.log("Error al realizar KeepAlive desde connection.");
-		console.log(e);
+			throw new Error(e);
 		}
 	}
 
@@ -113,7 +127,8 @@ class ClientConectionWS{
 		var timeout = 20000;
 		try{
 			let conection_instance=this;
-			if (socket!==null){
+			//if (socket!==null && (typeof socket !== "undefined") && !(typeof socket === "unavailable")){
+			if (socket){
 				if (socket.readyState===3){
 					console.log("Desconectado del servidor");
 					try{
@@ -130,7 +145,7 @@ class ClientConectionWS{
 			}
 
 		}catch(error) {
-			
+			throw new Error(e);	
 		}
 	}
 	
@@ -141,22 +156,23 @@ class ClientConectionWS{
 	async down(peer,type){
 		try {
 			let connection_socket=this.getConnection();
-			
-			await connection_socket.close();
-			
-			peer.setConnection(null);
-			
-			switch (type) {
-				case 'all':
-					peer.clearSessionsPeers();
-					peer.clearChannelPeers();
-					peer.getPeersOnline().clearCollection();
-					break;
-				case 'only-signal-server':
-					break
+
+			if (connection_socket){
+				await connection_socket.close();
+				peer.setConnection(false);
+				switch (type) {
+					case 'all':
+						peer.clearSessionsPeers();
+						peer.clearChannelPeers();
+						peer.getPeersOnline().clearCollection();
+						break;
+					case 'only-signal-server':
+						//peer.connectSignaServer();
+						break
+				}
 			}
-		}catch(error){
-			console.log("Error al realizar Down");
+		}catch(e){
+			throw new Error(e);
 		}
 	}
 	
@@ -164,61 +180,72 @@ class ClientConectionWS{
 			
 			let connection_socket=this.getConnection();
 
-			let connection_instance=this;
+			if (connection_socket){
+				let connection_instance=this;
 			
-			connection_socket.onerror = function(err){
-				console.error('Socket encountered error: ', err.message, 'Closing socket');
-				connection_socket.close();
-			};
-		  
-			connection_socket.onclose = function(event){
-			  try {
-				
-				console.log("desconection server signaling..");
-				connection_instance.cancelKeepAlive(connection_instance.timerId);
-				connection_instance.pollingReconnect(connection_socket,myPeer);
-
-			  }catch(e){
-				console.log("No puede ejecutar la orden de cancelacion keepAlive");
-				console.log(e);
-			  }
-			};
-
-			connection_socket.onopen = function(){
-					try {
-						connection_instance.cancelKeepAlive(connection_instance.timerIdReconnect);	
-					} catch (error) {
-						console.log("Falla al cancelar timer de re-conexion");
-					}
+				connection_socket.onerror = function(err){
+					console.log("Error sobre la conecion del socket");
+					console.error('Socket encountered error: ', err.message, 'Closing socket');
+					connection_socket.close();
+				};
+			
+				connection_socket.onclose = function(event){
+				try {
 					
-					if (myPeer.getCliendId()==-1){
-						connection_instance.sendData(
-						{
-						  type: "login",
-						  name: myPeer.getUsername(),
-						  mode: myPeer.getMode()
-					   }
-					  );
-					}else{
-					  	console.log("enviando reconnect desde extension: "+myPeer.getCliendId());
-					  	connection_instance.sendData(
-						  {
-							'type':"reconnect",
-							'clientID': myPeer.getCliendId(),
-							'username':myPeer.getUsername(),
-							'mode': myPeer.getMode()
-						  }
+					console.log("desconection server signaling..");
+					connection_instance.cancelKeepAlive(connection_instance.timerId);
+					connection_instance.pollingReconnect(connection_socket,myPeer);
+
+				}catch(e){
+					throw new Error(e);
+				}
+				};
+
+				connection_socket.onopen = function(){
+						//la conexion fue abierta nuevamente se cancela el polling;
+						try {
+							connection_instance.cancelKeepAlive(connection_instance.timerIdReconnect);	
+						} catch (error) {
+							throw new Error(e);
+						}
+						
+						console.log("Login desde socket");
+						console.log("iniciando login");
+						if (myPeer.getCliendId()===-1){
+							connection_instance.sendData(
+							{
+							type: "login",
+							name: myPeer.getUsername(),
+							mode: myPeer.getMode()
+						}
 						);
+						}else{
+							console.log("enviando reconnect desde extension: "+myPeer.getCliendId());
+							connection_instance.sendData(
+							{
+								'type':"reconnect",
+								'clientID': myPeer.getCliendId(),
+								'username':myPeer.getUsername(),
+								'mode': myPeer.getMode()
+							}
+							);
+						}
+				};
+
+
+				connection_socket.onlogin = function(data){
+					console.log("Desde onlogin aguardo...");
+					console.log(data);
+				};	
+
+				connection_socket.onmessage = function (message){
+					let data = JSON.parse(message.data);
+					try {
+						myPeer.rcvSignalMessage(data,connection_instance);
+					} catch (error) {
+						throw new Error(e);
 					}
-			};
-		  
-			connection_socket.onmessage = function (message){
-				 let data = JSON.parse(message.data);
-                 try {
-                    myPeer.rcvSignalMessage(data,connection_instance);
-                 } catch (error) {
-                     console.log("Error al procesar onmessage sobre WebSocket");
-                 }
-			};
+				};
+			}
 	};
 }

@@ -21,7 +21,7 @@ async function getGeoCoord(){
         
         return coord;
     } catch(e) {
-      console.log(e);
+      throw new Error(e);
     }
  }
 

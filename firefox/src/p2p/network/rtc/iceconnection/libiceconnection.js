@@ -3,7 +3,7 @@ class PIceConnectionState{
 
 	constructor(name){
 		this.name=name;
-		this.data=null;
+		this.data;
 	}
 
 	setData(data){
@@ -52,7 +52,7 @@ class PIceFailedState extends PIceConnectionState {
 			
 			let user = p2p.getPeersOnline().searchPeer(username);
 			
-			if (user!==null){
+			if (user){
 				p2p.updateP2PState(username);
 				p2p.sendData({
 					type: "callCommand",
@@ -66,8 +66,7 @@ class PIceFailedState extends PIceConnectionState {
 			}
 
    		} catch(e) {
-   			console.log("Error al realizar PIceFailedState handleDo");
-   			console.log(e);
+			throw new Error(e);
    		}
    }
 
@@ -77,8 +76,7 @@ class PIceFailedState extends PIceConnectionState {
    		console.log("El estado no es connected");
    		console.log(this.name);
    	} catch(e) {
-   		console.error(e);
-   		console.log("Error al realizar candidate sobre failed");
+		throw new Error(e);
    	}
    }
 
@@ -89,8 +87,7 @@ class PIceFailedState extends PIceConnectionState {
 			peer.getPeersOnline().searchPeer(id).setP2P(false);
 
 	   	} catch(e) {
-	   		console.log("Error al realizar P2P internal, al realizar update desde ice failed.");
-	   		console.error(e);
+			throw new Error(e);
 	   	}
    }
 
@@ -109,13 +106,12 @@ class PIceDisconnectedState extends PIceConnectionState {
 			//console.log(username);
 			p2p.getPeersOnline().setModeSearch(new searchPolicyUser());			
 			let user = p2p.getPeersOnline().searchPeer(username);
-			if (user!==null){
+			if (user){
 				//Se puede hacer algo mas?
 			}
 
    		} catch(e) {
-   			console.log("Error al realizar PIceDisconnectedState handleDo");
-   			console.log(e);
+			throw new Error(e);
    		}
    }
 
@@ -124,8 +120,7 @@ class PIceDisconnectedState extends PIceConnectionState {
    		//statements
    		console.log("El estado no es connected");
    	} catch(e) {
-   		console.error(e);
-   		console.log("Error al realizar candidate sobre disconnected");
+		throw new Error(e);
    	}
    }
 
@@ -134,8 +129,7 @@ class PIceDisconnectedState extends PIceConnectionState {
 			peer.getPeersOnline().setModeSearch(new searchPolicyId());
 			peer.getPeersOnline().searchPeer(id).setP2P(false);
 	   	} catch(e) {
-	   		console.log("Error al realizar P2P internal, al realizar update desde ice disconnected.");
-	   		console.error(e);
+			throw new Error(e);
 	   	}
    } 
 }
@@ -162,8 +156,7 @@ class PIceClosedState extends PIceConnectionState {
    	try {
    		// se puede realizar algo mas?
    	} catch(e) {
-   		console.error(e);
-   		console.log("Error al realizar candidate sobre Closed");
+		throw new Error(e);
    	}
    }
 
@@ -172,8 +165,7 @@ class PIceClosedState extends PIceConnectionState {
 			peer.getPeersOnline().setModeSearch(new searchPolicyId());
 			peer.getPeersOnline().searchPeer(id).setP2P(false);
 	   	} catch(e) {
-	   		console.log("Error al realizar P2P internal, al realizar update desde ice closed.");
-	   		console.error(e);
+			throw new Error(e);
 	   	}
    }
 }
@@ -189,8 +181,7 @@ class PIceCheckingState extends PIceConnectionState {
    	try {
    		p2p.showMessageConnection({title:'Checking ICE state: '+username,body:'Checking...'});
    	} catch(e) {
-   		console.log("Error al realizar PIceCheckingState handleDo");
-   		console.log(e);
+		throw new Error(e);
    	}
    }
 
@@ -198,8 +189,7 @@ class PIceCheckingState extends PIceConnectionState {
    	try {
    		//statements
    	} catch(e) {
-   		console.error(e);
-   		console.log("Error al realizar candidate sobre ICE checking");
+		throw new Error(e);
    	}
    }
 
@@ -208,8 +198,7 @@ class PIceCheckingState extends PIceConnectionState {
 			peer.getPeersOnline().setModeSearch(new searchPolicyId());
 			peer.getPeersOnline().searchPeer(id).setP2P(false);
 	   	} catch(e) {
-	   		console.log("Error al realizar P2P internal, al realizar update desde ice checking.");
-	   		console.error(e);
+			throw new Error(e);
 	   	}
    }
 
@@ -225,8 +214,7 @@ class PIceNewState extends PIceConnectionState {
    	try {
    		p2p.showMessageConnection({title:'ICE new conection.',body:'Nueva conexión: '+username});
    	} catch(e) {
-   		console.log("Error al realizar PIceNewState handleDo");
-   		console.log(e);
+		throw new Error(e);
    	}
    }
 
@@ -234,8 +222,7 @@ class PIceNewState extends PIceConnectionState {
    	try {
    		//statements
    	} catch(e) {
-   		console.error(e);
-   		console.log("Error al realizar candidate sobre New ICE");
+		throw new Error(e);
    	}
    }
 
@@ -244,8 +231,7 @@ class PIceNewState extends PIceConnectionState {
 			peer.getPeersOnline().setModeSearch(new searchPolicyId());
 			peer.getPeersOnline().searchPeer(id).setP2P(false);
 	   	}catch(e){
-	   		console.log("Error al realizar P2P internal, al realizar update desde ice new.");
-	   		console.error(e);
+			throw new Error(e);
 	   	}
    }
 
@@ -262,8 +248,7 @@ class PIceConectedState extends PIceConnectionState {
 		p2p.showMessageConnection({title:'ICE Online.',body:'ICE conectado: '+username});
 		p2p.updateP2PState(username);
    	} catch(e) {
-   		console.log("Error al realizar PIceConectedState handleDo");
-   		console.log(e);
+		throw new Error(e);
    	}
    }
 
@@ -272,8 +257,7 @@ class PIceConectedState extends PIceConnectionState {
 		//se pued hacer algo mas?
    	} catch(e) {
    		// statements
-   		console.log("Error al realizar candidate desde ice connected");
-   		console.error(e);
+   		throw new Error(e);
    	}
    }
 
@@ -291,8 +275,7 @@ class PIceConectedState extends PIceConnectionState {
 		}
 		p2p.sendData(objroute);
    	} catch(e) {
-   		console.log("Error Al realizar doSessio sobre estado connected");
-   		console.error(e);
+		throw new Error(e);
    	}
    }
 
@@ -302,8 +285,7 @@ class PIceConectedState extends PIceConnectionState {
 		peer.getPeersOnline().searchPeer(id).setP2P(true);
 
    	} catch(e) {
-   		console.log("Error al realizar P2P internal, al realizar update connected.");
-   		console.error(e);
+		throw new Error(e);
    	}
    }
 }
@@ -313,7 +295,7 @@ class ManagerFactoryHandleIceState {
 	
 	constructor(){
 		//'failed','disconnected','closed','checking','new','connected'
-		this.factory=null;
+		this.factory={};
 	}
 
 	getState(state){
@@ -342,8 +324,7 @@ class ManagerFactoryHandleIceState {
 				return this.factory;
 
 		}catch(e) {
-			console.log("Error al realizar getState");
-			console.log(e);
+			throw new Error(e);
 		}
 	}
 }

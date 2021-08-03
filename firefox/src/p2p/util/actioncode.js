@@ -13,6 +13,7 @@ class ActionType{
 
 	do(puertoCS){
 		try{
+			console.log("Action con puerto: ");
 			console.log("manipulacion de dataObj: ");
 		}catch(e){
 			console.log("Action no funcional para este tipo");
@@ -110,6 +111,54 @@ class ActionCode{
 
 		try {
 			switch (this.dataobj.type){
+				/*
+				case "loadJson":
+					
+				break;
+				case "script":
+					
+					browser.notifications.create({
+					    "type": "basic",
+					    "iconUrl": browser.extension.getURL("icons/quicknote-48.png"),
+					    "title": "Accept script",
+					    "message": "Execute local script"
+					  });
+
+					console.log("Action code:");
+					let buildscript = new builderScript(this.dataobj);
+					console.log("buildscript objecto");
+
+					let scriptobj = buildscript.getScript();
+
+					scriptobj.do(this.portToCS);
+
+					break;
+				case "url":
+	    			 browser.notifications.create({
+					    "type": "basic",
+					    "iconUrl": browser.extension.getURL("icons/quicknote-48.png"),
+					    "title": "Accept url",
+					    "message": "Save url"
+					  });
+				break;
+				case "domhtml":
+					browser.notifications.create({
+					    "type": "basic",
+					    "iconUrl": browser.extension.getURL("icons/quicknote-48.png"),
+					    "title": "Accept HTML DOM",
+					    "message": "Save DOM"
+					  });
+
+					console.log("Action code:");
+
+					let buildomhtml = new builderDomHtml(this.dataobj);
+					
+					let domobj = buildomhtml.getDomHtml();
+
+					domobj.do(this.portToCS);
+
+				break;
+				*/
 				case "Request":
 					if (this.dataobj.extensioname){
 						console.log("Aceptar request de la extension para ser procesado.");
@@ -119,6 +168,7 @@ class ActionCode{
 							'data':this.dataobj
 						};
 
+						//console.log(this.portToCS);
 
 						this.portToCS.postMessage(JSON.stringify(acceptDataRES));
 					}else{
