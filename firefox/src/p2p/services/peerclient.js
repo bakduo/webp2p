@@ -18,14 +18,14 @@ class PeerClient{
 		// this.peerConnectionConfig = {
 		// 	iceServers: [
 		// 	  {
-		// 		urls: 'stun:server-test2.oncosmos.com:5349',
-		// 		username: 'oncosmosuser',
-		// 		credential: 'lifia19'
+		// 		urls: 'stun:any-service:5349',
+		// 		username: 'auser',
+		// 		credential: 'apassword'
 		// 	  },
 		// 	  {
-		// 		urls: 'turn:server-test2.oncosmos.com:3478',
-		// 		username: 'oncosmosuser',
-		// 		credential: 'lifia19'
+		// 		urls: 'turn:any-service:3478',
+		// 		username: 'auser',
+		// 		credential: 'apassword'
 		// 	  }
 		// 	],
 		// 	iceTransportPolicy:'all'
@@ -62,7 +62,7 @@ class PeerClient{
 		this.testCommunicaction={};
 		this.signal_server_url="";
 		this.eliminarPeers=[];
-		this.urlsignalserver="wss://signal01.oncosmos.com:64889";
+		this.urlsignalserver="wss://any-service:64889";
 		this.portExternals={};
 		this.enable=false;
 
